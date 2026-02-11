@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { RecitationType, Contribution, EsalData } from './types';
 import { RECITATIONS } from './constants';
@@ -5,44 +6,57 @@ import RecitationCard from './components/RecitationCard';
 import { getSpiritualInsight } from './services/geminiService';
 import { logger } from './services/logger';
 
+const STORAGE_KEY = 'esal_sawab_v2';
+const USER_KEY = 'esal_user_name';
+const VIEW_KEY = 'esal_view_mode';
+
 const App: React.FC = () => {
+  // Initialize state with validation
   const [data, setData] = useState<EsalData>(() => {
     try {
-      const saved = localStorage.getItem('esal_sawab_v2');
+      const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && parsed.contributions) {
+          logger.info("Local storage data loaded successfully.");
+          return parsed;
+        }
       }
     } catch (e) {
       logger.error("Failed to parse local storage data", e);
     }
     return {
       deceasedName: 'Loved One Name',
-      passedDate: 'Date',
+      passedDate: new Date().toLocaleDateString(),
       contributions: []
     };
   });
 
-  const [userName, setUserName] = useState(() => localStorage.getItem('esal_user_name') || '');
+  const [userName, setUserName] = useState(() => localStorage.getItem(USER_KEY) || '');
   const [isEditingMemorial, setIsEditingMemorial] = useState(false);
   const [memorialName, setMemorialName] = useState(data.deceasedName);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
-    return (localStorage.getItem('esal_view_mode') as 'grid' | 'list') || 'grid';
+    return (localStorage.getItem(VIEW_KEY) as 'grid' | 'list') || 'grid';
   });
-  const [aiInsight, setAiInsight] = useState<string>("Loading spiritual insight...");
-  const [insightLoading, setInsightLoading] = useState(true);
+  const [aiInsight, setAiInsight] = useState<string>("Bismillah. Start reciting to see spiritual virtues.");
+  const [insightLoading, setInsightLoading] = useState(false);
 
   // Persistence effects
   useEffect(() => {
-    localStorage.setItem('esal_sawab_v2', JSON.stringify(data));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      logger.error("Failed to save data to local storage", e);
+    }
   }, [data]);
 
   useEffect(() => {
-    localStorage.setItem('esal_user_name', userName);
+    localStorage.setItem(USER_KEY, userName);
   }, [userName]);
 
   useEffect(() => {
-    localStorage.setItem('esal_view_mode', viewMode);
+    localStorage.setItem(VIEW_KEY, viewMode);
   }, [viewMode]);
 
   // Initial AI Insight
@@ -59,7 +73,7 @@ const App: React.FC = () => {
   const handleAdd = (type: RecitationType, count: number) => {
     if (!userName.trim()) {
       logger.warn("Attempted to add contribution without user name.");
-      alert("Please enter your name at the top first.");
+      alert("Please enter your name as the contributor at the top first.");
       const input = document.getElementById('user-name-input');
       input?.focus();
       return;
@@ -76,13 +90,17 @@ const App: React.FC = () => {
 
     logger.info(`Adding ${count} to ${type} by ${userName}`);
     setLastAddedId(newId);
-    setData(prev => ({
-      ...prev,
-      contributions: [newContrib, ...prev.contributions]
-    }));
+    
+    setData(prev => {
+      const updated = {
+        ...prev,
+        contributions: [newContrib, ...prev.contributions]
+      };
+      return updated;
+    });
 
-    // Randomly update insight on interaction for variety
-    if (Math.random() > 0.7) {
+    // Occasionally update insight on interaction
+    if (Math.random() > 0.6) {
       getSpiritualInsight(type).then(setAiInsight);
     }
 
@@ -103,9 +121,10 @@ const App: React.FC = () => {
   }, [totals]);
 
   const updateMemorial = () => {
+    if (!memorialName.trim()) return;
     setData(prev => ({ ...prev, deceasedName: memorialName }));
     setIsEditingMemorial(false);
-    logger.log("Memorial updated to:", memorialName);
+    logger.info("Memorial updated and saved to local storage:", memorialName);
   };
 
   const groupedContributions = useMemo(() => {
@@ -121,7 +140,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-12 px-4 sm:px-6 lg:px-8 pt-6 transition-all duration-500 max-w-[1600px] mx-auto">
-      {/* AI Spiritual Insight Banner - Production Friendly */}
+      {/* AI Spiritual Insight Banner */}
       <div className="mb-6 bg-cyan-50/50 border border-cyan-100 rounded-2xl p-4 animate-fade-in relative overflow-hidden group">
         <div className="absolute right-[-20px] top-[-20px] opacity-10 group-hover:rotate-12 transition-transform duration-700">
           <i className="fas fa-mosque text-8xl text-cyan-400"></i>
@@ -163,6 +182,7 @@ const App: React.FC = () => {
                     className="flex-1 border-b border-cyan-200 py-1 text-sm font-bold text-slate-700 outline-none focus:border-cyan-500" 
                     value={memorialName} 
                     onChange={(e) => setMemorialName(e.target.value)} 
+                    onKeyDown={(e) => e.key === 'Enter' && updateMemorial()}
                     autoFocus
                   />
                   <button onClick={updateMemorial} className="bg-cyan-500 text-white text-[10px] px-3 py-1.5 rounded-lg font-black uppercase shadow-lg shadow-cyan-500/20">Set</button>
@@ -187,7 +207,7 @@ const App: React.FC = () => {
             <i className="fas fa-id-card text-sm"></i>
           </div>
           <div className="flex-1">
-            <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Contributor Identity</p>
+            <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Your Name (Contributor)</p>
             <input
               id="user-name-input"
               type="text"
@@ -228,7 +248,7 @@ const App: React.FC = () => {
         ))}
       </div>
 
-      {/* Production-Ready Log */}
+      {/* Log Section */}
       <div className="bg-white rounded-3xl border border-cyan-50 p-8 shadow-sm max-w-5xl mx-auto overflow-hidden relative">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -240,7 +260,7 @@ const App: React.FC = () => {
             <span className="text-[10px] font-bold text-slate-300 uppercase">Status</span>
             <div className="flex items-center gap-2 justify-end">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-xs font-black text-slate-700">Live</span>
+              <span className="text-xs font-black text-slate-700">Online</span>
             </div>
           </div>
         </div>
@@ -297,7 +317,7 @@ const App: React.FC = () => {
           <i className="fas fa-heart hover:text-cyan-400 transition-colors cursor-help"></i>
         </div>
         <p className="text-[10px] uppercase font-black tracking-[0.8em] text-slate-400">Esal-e-Sawab • Sadaqah Jariyah</p>
-        <p className="text-[8px] text-slate-200 mt-4 uppercase tracking-[0.2em]">Build 1.4.0 • Production Stable</p>
+        <p className="text-[8px] text-slate-200 mt-4 uppercase tracking-[0.2em]">Data stored locally in browser • v1.4.1</p>
       </footer>
     </div>
   );
