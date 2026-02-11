@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { logger } from "./logger";
 
@@ -6,16 +7,10 @@ import { logger } from "./logger";
  * Adheres to the strictly defined structure: const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
  */
 export const getSpiritualInsight = async (recitationTitle: string): Promise<string> => {
-  const apiKey = process.env.API_KEY;
-
-  if (!apiKey) {
-    logger.warn("Gemini Service: process.env.API_KEY is missing. Falling back to local content.");
-    return "The remembrance of Allah brings peace and tranquility to the believer's heart.";
-  }
-
   try {
     logger.network("POST", "Gemini API - GenerateContent");
-    const ai = new GoogleGenAI({ apiKey });
+    // Initialize exactly as required by SDK guidelines
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -35,8 +30,9 @@ export const getSpiritualInsight = async (recitationTitle: string): Promise<stri
     }
 
     return insight.trim();
-  } catch (error) {
+  } catch (error: any) {
     logger.error("Gemini Insight Error:", error);
+    // Return a thoughtful fallback message if API fails
     return "The Prophet (ﷺ) said: 'The best of you are those who learn the Quran and teach it.' Reciting for others is a great act of mercy.";
   }
 };

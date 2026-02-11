@@ -6,7 +6,7 @@
   "scripts": {
     "start": "serve -s .",
     "dev": "serve .",
-    "build": "echo 'ESM Static Application: Preparing distribution...' && rm -rf dist && mkdir -p dist && cp -rv . dist/ --exclude dist",
+    "build": "echo 'ESM Static Application: Preparing distribution...' && rm -rf dist && mkdir -p dist && cp index.html index.tsx App.tsx types.ts constants.tsx metadata.json dist/ && cp -r components services dist/",
     "test": "echo 'No tests specified' && exit 0"
   },
   "dependencies": {
