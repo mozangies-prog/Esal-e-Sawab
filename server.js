@@ -7,6 +7,9 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+// Railway provides the port via environment variable. 
+// Default to 3000 only for local testing.
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -17,24 +20,24 @@ let pool;
 
 const connectDB = async () => {
   if (!process.env.MYSQL_URL) {
-    console.error("[CRITICAL ERROR] process.env.MYSQL_URL is missing. Railway service variables must be configured.");
+    console.error("[CRITICAL] process.env.MYSQL_URL is missing. Please add it to Railway Variables.");
     return null;
   }
 
   try {
-    console.log("[DB] Attempting connection to MySQL using MYSQL_URL...");
+    console.log("[DB] Connecting to MySQL...");
     pool = mysql.createPool({
       uri: process.env.MYSQL_URL,
       waitForConnections: true,
       connectionLimit: 10,
-      queueLimit: 0
+      queueLimit: 0,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000
     });
 
-    // Test connection
     const connection = await pool.getConnection();
-    console.log("[DB] ✅ Successfully connected to MySQL.");
+    console.log("[DB] ✅ Connection Established.");
     
-    // Initialize Table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS contributions (
         id VARCHAR(255) PRIMARY KEY,
@@ -44,12 +47,11 @@ const connectDB = async () => {
         timestamp BIGINT NOT NULL
       )
     `);
-    console.log("[DB] ✅ Contributions table verified/created.");
+    console.log("[DB] ✅ Table Verified.");
     connection.release();
     return pool;
   } catch (err) {
-    console.error("[DB ERROR] Failed to connect to MySQL:", err.message);
-    console.error("[DB STACK]", err.stack);
+    console.error("[DB ERROR] Connection failed:", err.message);
     return null;
   }
 };
@@ -57,14 +59,23 @@ const connectDB = async () => {
 connectDB();
 
 // 2. API Endpoints
+// Health check for Railway to verify the service is up
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    database: pool ? 'connected' : 'disconnected',
+    timestamp: new Date().toISOString() 
+  });
+});
+
 app.get('/api/stats', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: "Database not connected", detail: "Check Railway logs for MYSQL_URL errors." });
+  if (!pool) return res.status(503).json({ error: "Database not connected" });
   
   try {
     const [rows] = await pool.query('SELECT recitationType, SUM(count) as total FROM contributions GROUP BY recitationType');
     const [grandTotalRow] = await pool.query('SELECT SUM(count) as total FROM contributions');
     
-    const stats = { grandTotal: grandTotalRow[0]?.total || 0 };
+    const stats = { grandTotal: parseInt(grandTotalRow[0]?.total || 0) };
     rows.forEach(row => {
       const key = `total_${row.recitationType.replace(/\s+/g, '_')}`;
       stats[key] = parseInt(row.total);
@@ -72,8 +83,7 @@ app.get('/api/stats', async (req, res) => {
     
     res.json(stats);
   } catch (err) {
-    console.error("[API ERROR] getStats failed:", err.message);
-    res.status(500).json({ error: "Database query failed", detail: err.message });
+    res.status(500).json({ error: "Query failed", detail: err.message });
   }
 });
 
@@ -84,7 +94,7 @@ app.get('/api/contributions', async (req, res) => {
     const [rows] = await pool.query('SELECT * FROM contributions ORDER BY timestamp DESC LIMIT 50');
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: "Database query failed", detail: err.message });
+    res.status(500).json({ error: "Query failed", detail: err.message });
   }
 });
 
@@ -100,18 +110,22 @@ app.post('/api/contributions', async (req, res) => {
     );
     res.status(201).json({ success: true });
   } catch (err) {
-    console.error("[API ERROR] postContribution failed:", err.message);
-    res.status(500).json({ error: "Database insert failed", detail: err.message });
+    res.status(500).json({ error: "Insert failed", detail: err.message });
   }
 });
 
-// 3. Serve Frontend (Production Only)
-app.use(express.static(path.join(__dirname, 'dist')));
+// 3. Serve Frontend Assets
+// Ensure we serve files from the 'dist' directory created by Vite
+const distPath = path.join(__dirname, 'dist');
+app.use(express.static(distPath));
 
+// Fallback: Handle SPA routing by serving index.html for all non-API requests
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`[SERVER] Running on port ${PORT}`);
+// IMPORTANT: Listen on '0.0.0.0' to allow Railway to expose the service to the internet
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[SERVER] 🚀 Publicly accessible on port ${PORT}`);
+  console.log(`[SERVER] Serving static files from: ${distPath}`);
 });

@@ -36,19 +36,17 @@ const App: React.FC = () => {
   );
   
   const [globalStats, setGlobalStats] = useState<any>(null);
-  const [dbStatus, setDbStatus] = useState<'live' | 'local' | 'connecting' | 'error'>('connecting');
-  const [dbError, setDbError] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'collective' | 'personal' | 'connecting' | 'unavailable'>('connecting');
   const [aiInsight, setAiInsight] = useState<string>("Bismillah. Your collective prayers are a gift that transcends this world.");
   
-  const isOnline = dbStatus === 'live';
+  const isCollective = syncStatus === 'collective';
 
   const syncWithServer = async () => {
     const statsResult = await apiService.getStats();
     
-    // Check for explicit error from server
     if (statsResult && statsResult.error) {
-      setDbStatus('error');
-      setDbError(statsResult.detail || statsResult.error);
+      setSyncStatus('unavailable');
+      // Detailed error is logged in server logs, not shown to user
       return;
     }
 
@@ -57,20 +55,19 @@ const App: React.FC = () => {
     if (statsResult && !statsResult.error && contribs) {
       setGlobalStats(statsResult);
       setLocalData(prev => ({ ...prev, contributions: contribs }));
-      setDbStatus('live');
-      setDbError(null);
+      setSyncStatus('collective');
     } else {
-      if (dbStatus !== 'error' && dbStatus !== 'local') {
-        setDbStatus('local');
+      if (syncStatus !== 'unavailable' && syncStatus !== 'personal') {
+        setSyncStatus('personal');
       }
     }
   };
 
   useEffect(() => {
     syncWithServer();
-    const interval = setInterval(syncWithServer, isOnline ? POLLING_FAST : POLLING_SLOW);
+    const interval = setInterval(syncWithServer, isCollective ? POLLING_FAST : POLLING_SLOW);
     return () => clearInterval(interval);
-  }, [isOnline]);
+  }, [isCollective]);
 
   useEffect(() => localStorage.setItem(USER_KEY, userName), [userName]);
   useEffect(() => localStorage.setItem(VIEW_KEY, viewMode), [viewMode]);
@@ -112,7 +109,7 @@ const App: React.FC = () => {
   const totals = useMemo(() => {
     const map: Record<string, number> = {};
     Object.values(RecitationType).forEach(t => {
-      if (isOnline && globalStats) {
+      if (isCollective && globalStats) {
         const dbKey = `total_${t.replace(/\s+/g, '_')}`;
         map[t] = globalStats[dbKey] || 0;
       } else {
@@ -122,21 +119,20 @@ const App: React.FC = () => {
       }
     });
     return map;
-  }, [globalStats, localData.contributions, isOnline]);
+  }, [globalStats, localData.contributions, isCollective]);
 
-  const grandTotal = isOnline ? (globalStats?.grandTotal || 0) : Object.values(totals).reduce((a, b) => a + b, 0);
+  const grandTotal = isCollective ? (globalStats?.grandTotal || 0) : Object.values(totals).reduce((a, b) => a + b, 0);
 
   return (
     <div className="min-h-screen pb-12 px-4 sm:px-6 lg:px-8 pt-6 max-w-[1600px] mx-auto transition-all">
-      {/* DB Connection Critical Error Banner */}
-      {dbStatus === 'error' && (
-        <div className="mb-6 bg-red-600 text-white rounded-2xl p-6 shadow-2xl animate-bounce border-b-4 border-red-800">
-          <div className="flex items-center gap-4">
-            <i className="fas fa-database text-3xl"></i>
+      {/* Connection Alert Banner (Graceful) */}
+      {syncStatus === 'unavailable' && (
+        <div className="mb-6 bg-slate-800 text-white rounded-2xl p-4 shadow-lg border-b-2 border-slate-900">
+          <div className="flex items-center gap-3">
+            <i className="fas fa-circle-nodes text-cyan-400"></i>
             <div>
-              <h2 className="text-sm font-black uppercase tracking-widest">Railway MySQL Error Detected</h2>
-              <p className="text-xs font-mono bg-red-700/50 p-2 rounded mt-2 select-all">{dbError}</p>
-              <p className="text-[10px] mt-2 opacity-80">The app is using process.env.MYSQL_URL. Check your Railway dashboard for connection string errors.</p>
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Sync Status</p>
+              <p className="text-xs font-medium">Collective prayers are temporarily unavailable. Your contributions are being saved locally.</p>
             </div>
           </div>
         </div>
@@ -160,21 +156,21 @@ const App: React.FC = () => {
         <div className="text-center lg:text-left">
           <h1 className="text-4xl lg:text-5xl font-bold cyan-theme serif-font mb-1">Esal-e-Sawab</h1>
           <div className="flex items-center gap-2 justify-center lg:justify-start">
-            <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-400 animate-pulse' : dbStatus === 'error' ? 'bg-red-500' : 'bg-orange-400'}`}></span>
+            <span className={`w-1.5 h-1.5 rounded-full ${isCollective ? 'bg-green-400 animate-pulse' : syncStatus === 'unavailable' ? 'bg-slate-400' : 'bg-orange-400'}`}></span>
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">
-              {isOnline ? 'MySQL Live Sync' : dbStatus === 'error' ? 'DB CONNECTION FAILED' : 'Local Storage Active'}
+              {isCollective ? 'Collective Real-time Sync' : syncStatus === 'unavailable' ? 'Sync Unavailable' : 'Personal Mode'}
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap justify-center gap-4">
           <div className="bg-white rounded-2xl shadow-sm border border-cyan-50 p-3 px-6 flex flex-col items-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Grand Total</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Recitations</span>
             <span className="text-cyan-500 font-black text-2xl leading-tight">{grandTotal.toLocaleString()}</span>
           </div>
           <div className="bg-white rounded-2xl shadow-sm border border-cyan-50 p-3 px-6 min-w-[280px]">
-            <p className="text-[10px] font-bold text-slate-300 uppercase">Memorial Foundation</p>
-            <h2 className="serif-font text-2xl font-bold cyan-theme truncate">{MEMORIAL_NAME}</h2>
+            <p className="text-[10px] font-bold text-slate-300 uppercase">In Memory Of</p>
+            <h2 className="serif-font text-2xl font-bold cyan-theme truncate tracking-wide">{MEMORIAL_NAME}</h2>
           </div>
         </div>
       </div>
@@ -186,7 +182,7 @@ const App: React.FC = () => {
             <i className="fas fa-user-check text-sm"></i>
           </div>
           <div className="flex-1">
-            <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Your Name</p>
+            <p className="text-[10px] font-black text-slate-300 uppercase mb-1">Contributor Name</p>
             <input
               id="user-name-input"
               type="text"
@@ -199,11 +195,11 @@ const App: React.FC = () => {
         </div>
 
         <div className="flex bg-slate-100/50 rounded-xl p-1.5 border border-slate-200/50">
-          <button onClick={() => setViewMode('grid')} className={`px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'grid' ? 'bg-white text-cyan-500 shadow-sm' : 'text-slate-400'}`}>
-             Grid View
+          <button onClick={() => setViewMode('grid')} className={`px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'grid' ? 'bg-white text-cyan-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
+             Grid
           </button>
-          <button onClick={() => setViewMode('list')} className={`px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-white text-cyan-500 shadow-sm' : 'text-slate-400'}`}>
-             List View
+          <button onClick={() => setViewMode('list')} className={`px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-white text-cyan-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
+             List
           </button>
         </div>
       </div>
@@ -218,10 +214,10 @@ const App: React.FC = () => {
       {/* Recent Activity */}
       <div className="bg-white rounded-3xl border border-cyan-50 p-8 shadow-sm max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-lg font-black text-slate-800 uppercase tracking-widest">Recent Contributions</h2>
+          <h2 className="text-lg font-black text-slate-800 uppercase tracking-widest">Recent Activity</h2>
           <div className="text-right">
             <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-              {isOnline ? 'MySQL Real-time' : 'Local History'}
+              {isCollective ? 'Collective Updates' : 'Personal History'}
             </span>
           </div>
         </div>
@@ -238,16 +234,16 @@ const App: React.FC = () => {
                 <div key={c.id} className={`flex justify-between items-center p-4 px-6 rounded-2xl bg-slate-50 border border-transparent transition-all ${lastAddedId === c.id ? 'bg-cyan-50 border-cyan-200' : ''}`}>
                   <div className="flex items-center gap-5">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${lastAddedId === c.id ? 'bg-cyan-500 text-white border-cyan-400' : 'bg-white text-slate-300 border-slate-100'}`}>
-                      <i className="fas fa-check text-xs"></i>
+                      <i className="fas fa-heart text-xs"></i>
                     </div>
                     <div>
-                      <p className="text-sm font-black text-slate-700">{c.contributorName}</p>
+                      <p className="text-sm font-black text-slate-700 leading-none mb-1">{c.contributorName}</p>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{c.recitationType}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-cyan-500 font-black text-lg">+{c.count.toLocaleString()}</p>
-                    <p className="text-[10px] text-slate-300 font-bold">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    <p className="text-[10px] text-slate-300 font-bold uppercase">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
                 </div>
               ))}
@@ -255,6 +251,10 @@ const App: React.FC = () => {
           )}
         </div>
       </div>
+
+      <footer className="text-center py-12 mt-12 border-t border-slate-100">
+        <p className="text-[10px] uppercase font-black tracking-[0.8em] text-slate-300">Esal-e-Sawab • Sadaqah Jariyah</p>
+      </footer>
     </div>
   );
 };
