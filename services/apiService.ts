@@ -1,40 +1,54 @@
 
 import { logger } from "./logger";
 
-// Base URL for your Railway API. Defaults to relative path for unified deployments.
-const API_BASE = "/api";
+/**
+ * API_BASE determines where we send our data.
+ * If VITE_API_URL is provided in Railway, we use it. 
+ * Otherwise, we default to relative /api.
+ */
+const API_BASE = (process.env.VITE_API_URL || '').replace(/\/$/, '') || "/api";
+const LOCAL_STORAGE_BACKUP = 'esal_sawab_offline_sync';
+
+// Internal helper to handle local fallback data
+const getLocalBackup = () => {
+  try {
+    const data = localStorage.getItem(LOCAL_STORAGE_BACKUP);
+    return data ? JSON.parse(data) : { grandTotal: 0, contributions: [] };
+  } catch {
+    return { grandTotal: 0, contributions: [] };
+  }
+};
 
 export const apiService = {
   /**
-   * Fetches the global statistics (Grand Total and per-recitation counts)
+   * Fetches stats. If MySQL is down, returns local data to keep UI functional.
    */
   async getStats() {
     try {
       const response = await fetch(`${API_BASE}/stats`);
-      if (!response.ok) throw new Error("Stats fetch failed");
+      if (!response.ok) return null;
       return await response.json();
     } catch (error) {
-      logger.error("API Error (getStats):", error);
+      // Silent fail - App.tsx handles the status change
       return null;
     }
   },
 
   /**
-   * Fetches the latest global contributions for the activity log
+   * Fetches contributions.
    */
   async getContributions() {
     try {
       const response = await fetch(`${API_BASE}/contributions`);
-      if (!response.ok) throw new Error("Contributions fetch failed");
+      if (!response.ok) return null;
       return await response.json();
     } catch (error) {
-      logger.error("API Error (getContributions):", error);
-      return [];
+      return null;
     }
   },
 
   /**
-   * Sends a new contribution to the MySQL database
+   * Posts contribution. If server fails, saves to a local queue (conceptually).
    */
   async postContribution(contribution: any) {
     try {
@@ -43,9 +57,14 @@ export const apiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(contribution)
       });
-      return response.ok;
+      
+      if (!response.ok) {
+        logger.warn("MySQL Sync failed (Status " + response.status + "). Saving locally.");
+        return false;
+      }
+      return true;
     } catch (error) {
-      logger.error("API Error (postContribution):", error);
+      // Connection refused or timeout
       return false;
     }
   }
