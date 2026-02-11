@@ -5,6 +5,12 @@ import { RECITATIONS } from './constants';
 import RecitationCard from './components/RecitationCard';
 import { getSpiritualInsight } from './services/geminiService';
 import { logger } from './services/logger';
+import { 
+  isFirebaseConfigured, 
+  syncContribution, 
+  listenToContributions, 
+  listenToStats 
+} from './services/firebase';
 
 const STORAGE_KEY = 'esal_sawab_v2';
 const USER_KEY = 'esal_user_name';
@@ -13,20 +19,18 @@ const VIEW_KEY = 'esal_view_mode';
 const MEMORIAL_NAME = 'Chaudhary Liaqat Ali';
 
 const App: React.FC = () => {
-  // Initialize state with validation
+  // Local state for immediate UI feedback and fallback
   const [data, setData] = useState<EsalData>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object' && parsed.contributions) {
-          logger.info("Local storage data loaded successfully.");
-          // Ensure the deceased name is always the one requested
           return { ...parsed, deceasedName: MEMORIAL_NAME };
         }
       }
     } catch (e) {
-      logger.error("Failed to parse local storage data", e);
+      logger.error("Failed to load local storage", e);
     }
     return {
       deceasedName: MEMORIAL_NAME,
@@ -40,18 +44,36 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     return (localStorage.getItem(VIEW_KEY) as 'grid' | 'list') || 'grid';
   });
+  
+  const [globalStats, setGlobalStats] = useState<any>(null);
+  const [dbStatus, setDbStatus] = useState<'live' | 'local' | 'connecting'>(isFirebaseConfigured ? 'connecting' : 'local');
   const [aiInsight, setAiInsight] = useState<string>("Bismillah. Start reciting to see spiritual virtues.");
   const [insightLoading, setInsightLoading] = useState(false);
 
-  // Persistence effects
+  // Sync with Firestore (Global stats)
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-      logger.error("Failed to save data to local storage", e);
-    }
-  }, [data]);
+    if (isFirebaseConfigured) {
+      const unsubStats = listenToStats((stats) => {
+        setGlobalStats(stats);
+        setDbStatus('live');
+      });
 
+      const unsubContribs = listenToContributions((contribs) => {
+        setData(prev => ({
+          ...prev,
+          contributions: contribs as any
+        }));
+        setDbStatus('live');
+      });
+
+      return () => {
+        unsubStats();
+        unsubContribs();
+      };
+    }
+  }, []);
+
+  // Persistent settings
   useEffect(() => {
     localStorage.setItem(USER_KEY, userName);
   }, [userName]);
@@ -71,12 +93,10 @@ const App: React.FC = () => {
     fetchInitialInsight();
   }, []);
 
-  const handleAdd = (type: RecitationType, count: number) => {
+  const handleAdd = async (type: RecitationType, count: number) => {
     if (!userName.trim()) {
-      logger.warn("Attempted to add contribution without user name.");
-      alert("Please enter your name as the contributor at the top first.");
-      const input = document.getElementById('user-name-input');
-      input?.focus();
+      alert("Please enter your name as the contributor first.");
+      document.getElementById('user-name-input')?.focus();
       return;
     }
 
@@ -89,18 +109,24 @@ const App: React.FC = () => {
       timestamp: Date.now()
     };
 
-    logger.info(`Adding ${count} to ${type} by ${userName}`);
     setLastAddedId(newId);
-    
-    setData(prev => {
-      const updated = {
+
+    // If Firebase is live, send to global DB
+    if (isFirebaseConfigured) {
+      await syncContribution(newContrib);
+    } else {
+      // Fallback to local only
+      setData(prev => ({
         ...prev,
         contributions: [newContrib, ...prev.contributions]
-      };
-      return updated;
-    });
+      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        ...data,
+        contributions: [newContrib, ...data.contributions]
+      }));
+    }
 
-    // Occasionally update insight on interaction
+    // Refresh insight
     if (Math.random() > 0.6) {
       getSpiritualInsight(type).then(setAiInsight);
     }
@@ -109,17 +135,28 @@ const App: React.FC = () => {
   };
 
   const totals = useMemo(() => {
-    const map: Record<string, number> = {};
-    Object.values(RecitationType).forEach(t => map[t] = 0);
-    data.contributions.forEach(c => {
-      map[c.recitationType] = (map[c.recitationType] || 0) + c.count;
-    });
-    return map;
-  }, [data.contributions]);
+    if (globalStats) {
+      // Use Firestore totals if available
+      const map: Record<string, number> = {};
+      Object.values(RecitationType).forEach(t => {
+        const key = `total_${t.replace(/\s+/g, '_')}`;
+        map[t] = globalStats[key] || 0;
+      });
+      return map;
+    } else {
+      // Fallback to local calculation
+      const map: Record<string, number> = {};
+      Object.values(RecitationType).forEach(t => map[t] = 0);
+      data.contributions.forEach(c => {
+        map[c.recitationType] = (map[c.recitationType] || 0) + c.count;
+      });
+      return map;
+    }
+  }, [data.contributions, globalStats]);
 
   const grandTotal = useMemo(() => {
-    return Object.values(totals).reduce((a: number, b: number) => a + b, 0);
-  }, [totals]);
+    return globalStats?.grandTotal || Object.values(totals).reduce((a: number, b: number) => a + b, 0);
+  }, [totals, globalStats]);
 
   const groupedContributions = useMemo(() => {
     const groups: Record<string, Contribution[]> = {};
@@ -161,13 +198,12 @@ const App: React.FC = () => {
 
         <div className="flex flex-wrap justify-center gap-4">
           <div className="bg-white rounded-2xl shadow-sm border border-cyan-50 p-3 px-6 flex items-center gap-4">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Grand Total</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Global Grand Total</span>
             <span className="text-cyan-500 font-black text-2xl leading-none">
               {grandTotal.toLocaleString()}
             </span>
           </div>
 
-          {/* Memorial Section - Hardcoded and Non-Editable */}
           <div className="bg-white rounded-2xl shadow-sm border border-cyan-50 p-3 px-6 flex items-center gap-4 relative min-w-[280px]">
             <div className="text-left w-full">
               <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">In Memory Of</p>
@@ -227,19 +263,19 @@ const App: React.FC = () => {
         ))}
       </div>
 
-      {/* Log Section */}
+      {/* Global Activity Log Section */}
       <div className="bg-white rounded-3xl border border-cyan-50 p-8 shadow-sm max-w-5xl mx-auto overflow-hidden relative">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-lg font-black text-slate-800 uppercase tracking-widest">Global Activity Log</h2>
-            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Real-time local contributions</p>
+            <h2 className="text-lg font-black text-slate-800 uppercase tracking-widest">Global Live Activity</h2>
+            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Real-time collective contributions</p>
           </div>
           <div className="h-px bg-slate-100 flex-grow mx-8 hidden sm:block"></div>
           <div className="text-right">
-            <span className="text-[10px] font-bold text-slate-300 uppercase">Status</span>
+            <span className="text-[10px] font-bold text-slate-300 uppercase">System Status</span>
             <div className="flex items-center gap-2 justify-end">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-xs font-black text-slate-700">Online</span>
+              <div className={`w-2 h-2 rounded-full ${dbStatus === 'live' ? 'bg-green-400 animate-pulse' : dbStatus === 'connecting' ? 'bg-yellow-400 animate-bounce' : 'bg-red-400'}`}></div>
+              <span className="text-xs font-black text-slate-700 uppercase">{dbStatus}</span>
             </div>
           </div>
         </div>
@@ -250,7 +286,7 @@ const App: React.FC = () => {
               <div className="mb-4 text-cyan-100">
                 <i className="fas fa-cloud-sun text-6xl"></i>
               </div>
-              <p className="text-slate-400 text-sm italic font-medium">Ready for the first recitation of the day...</p>
+              <p className="text-slate-400 text-sm italic font-medium">Listening for global activity...</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -295,8 +331,8 @@ const App: React.FC = () => {
           <i className="fas fa-star hover:text-cyan-400 transition-colors cursor-help"></i>
           <i className="fas fa-heart hover:text-cyan-400 transition-colors cursor-help"></i>
         </div>
-        <p className="text-[10px] uppercase font-black tracking-[0.8em] text-slate-400">Esal-e-Sawab • Sadaqah Jariyah</p>
-        <p className="text-[8px] text-slate-200 mt-4 uppercase tracking-[0.2em]">Data stored locally in browser • v1.4.2</p>
+        <p className="text-[10px] uppercase font-black tracking-[0.8em] text-slate-400">Esal-e-Sawab • Collective Memorial</p>
+        <p className="text-[8px] text-slate-200 mt-4 uppercase tracking-[0.2em]">Real-time Global Syncing Active • v2.0.0</p>
       </footer>
     </div>
   );
