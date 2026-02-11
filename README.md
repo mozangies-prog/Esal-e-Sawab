@@ -1,20 +1,31 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
 
-# Run and deploy your AI Studio app
+# Esal-e-Sawab Collective Tracker
 
-This contains everything you need to run your app locally.
+A production-ready spiritual platform for tracking collective recitations.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1nHB2Ggf23-fxSms_QqgzfKQNSGE54hZU
+## 🚀 Deployment to Railway
 
-## Run Locally
+1. **Connect Repository**: Connect your GitHub repository to Railway.
+2. **Environment Variables**: 
+   - Go to the **Variables** tab in your Railway project.
+   - Add `API_KEY` and paste your Google Gemini API key.
+3. **Build Command**: 
+   - If using Vite: `npm run build`
+   - If using a static setup: Ensure `index.html` is in the root.
+4. **Start Command**: 
+   - Use `serve -s .` or Railway's default static server.
 
-**Prerequisites:**  Node.js
+## 🛠 Troubleshooting Blank Screens
 
+If the app shows a blank screen on Railway:
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. **Check Console**: Open Browser DevTools (F12). Look for `ReferenceError: process is not defined`. This app handles this by checking `typeof process`.
+2. **Missing API Key**: Ensure the `API_KEY` variable is set in the Railway dashboard.
+3. **MIME Types**: Ensure your hosting service serves `.js` files with the correct `application/javascript` header.
+4. **Import Maps**: This app uses Browser ESM. Ensure no build step is stripping the `<script type="importmap">` from `index.html`.
+
+## 📦 Features
+- Grid/List View Switching
+- Compact, high-density UI
+- LocalStorage persistence (Private)
+- Global Error Boundary for stability
