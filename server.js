@@ -7,7 +7,12 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+/**
+ * PORT 8080 is what your Railway dashboard shows. 
+ * Defaulting to 8080 ensures it matches the internal routing.
+ */
+const PORT = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json());
@@ -16,7 +21,7 @@ app.use(express.json());
 let pool;
 const connectDB = async () => {
   if (!process.env.MYSQL_URL) {
-    console.error("[CRITICAL] MYSQL_URL is missing in environment variables.");
+    console.error("[CRITICAL] MYSQL_URL is missing. The app will run in 'Personal Mode' only.");
     return null;
   }
   try {
@@ -28,7 +33,8 @@ const connectDB = async () => {
       enableKeepAlive: true
     });
     const connection = await pool.getConnection();
-    console.log("[DB] ✅ Connected to MySQL.");
+    console.log("[DB] ✅ Connection Successful.");
+    
     await connection.query(`
       CREATE TABLE IF NOT EXISTS contributions (
         id VARCHAR(255) PRIMARY KEY,
@@ -45,11 +51,11 @@ const connectDB = async () => {
 };
 connectDB();
 
-// 2. API
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+// 2. API Endpoints
+app.get('/api/health', (req, res) => res.json({ status: 'ok', port: PORT }));
 
 app.get('/api/stats', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: "No DB" });
+  if (!pool) return res.status(503).json({ error: "Database not connected" });
   try {
     const [rows] = await pool.query('SELECT recitationType, SUM(count) as total FROM contributions GROUP BY recitationType');
     const [grandTotalRow] = await pool.query('SELECT SUM(count) as total FROM contributions');
@@ -62,7 +68,7 @@ app.get('/api/stats', async (req, res) => {
 });
 
 app.get('/api/contributions', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: "No DB" });
+  if (!pool) return res.status(503).json({ error: "Database not connected" });
   try {
     const [rows] = await pool.query('SELECT * FROM contributions ORDER BY timestamp DESC LIMIT 50');
     res.json(rows);
@@ -70,7 +76,7 @@ app.get('/api/contributions', async (req, res) => {
 });
 
 app.post('/api/contributions', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: "No DB" });
+  if (!pool) return res.status(503).json({ error: "Database not connected" });
   const { id, contributorName, recitationType, count, timestamp } = req.body;
   try {
     await pool.query('INSERT INTO contributions VALUES (?, ?, ?, ?, ?)', [id, contributorName, recitationType, count, timestamp]);
@@ -78,13 +84,16 @@ app.post('/api/contributions', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 3. Static Assets (Production)
+// 3. Static Asset Serving
+// Pointing to 'dist' which is the default Vite build output
 const distPath = path.join(__dirname, 'dist');
 app.use(express.static(distPath));
+
+// Fallback for SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[SERVER] 🚀 Active on port ${PORT}`);
+  console.log(`[SERVER] 🚀 Application live at 0.0.0.0:${PORT}`);
 });
