@@ -10,6 +10,8 @@ const STORAGE_KEY = 'esal_sawab_v2';
 const USER_KEY = 'esal_user_name';
 const VIEW_KEY = 'esal_view_mode';
 
+const MEMORIAL_NAME = 'Chaudhary Liaqat Ali';
+
 const App: React.FC = () => {
   // Initialize state with validation
   const [data, setData] = useState<EsalData>(() => {
@@ -19,22 +21,21 @@ const App: React.FC = () => {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object' && parsed.contributions) {
           logger.info("Local storage data loaded successfully.");
-          return parsed;
+          // Ensure the deceased name is always the one requested
+          return { ...parsed, deceasedName: MEMORIAL_NAME };
         }
       }
     } catch (e) {
       logger.error("Failed to parse local storage data", e);
     }
     return {
-      deceasedName: 'Loved One Name',
+      deceasedName: MEMORIAL_NAME,
       passedDate: new Date().toLocaleDateString(),
       contributions: []
     };
   });
 
   const [userName, setUserName] = useState(() => localStorage.getItem(USER_KEY) || '');
-  const [isEditingMemorial, setIsEditingMemorial] = useState(false);
-  const [memorialName, setMemorialName] = useState(data.deceasedName);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     return (localStorage.getItem(VIEW_KEY) as 'grid' | 'list') || 'grid';
@@ -120,13 +121,6 @@ const App: React.FC = () => {
     return Object.values(totals).reduce((a: number, b: number) => a + b, 0);
   }, [totals]);
 
-  const updateMemorial = () => {
-    if (!memorialName.trim()) return;
-    setData(prev => ({ ...prev, deceasedName: memorialName }));
-    setIsEditingMemorial(false);
-    logger.info("Memorial updated and saved to local storage:", memorialName);
-  };
-
   const groupedContributions = useMemo(() => {
     const groups: Record<string, Contribution[]> = {};
     data.contributions.forEach(c => {
@@ -173,28 +167,13 @@ const App: React.FC = () => {
             </span>
           </div>
 
+          {/* Memorial Section - Hardcoded and Non-Editable */}
           <div className="bg-white rounded-2xl shadow-sm border border-cyan-50 p-3 px-6 flex items-center gap-4 relative min-w-[280px]">
             <div className="text-left w-full">
               <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">In Memory Of</p>
-              {isEditingMemorial ? (
-                <div className="flex items-center gap-2 mt-1">
-                  <input 
-                    className="flex-1 border-b border-cyan-200 py-1 text-sm font-bold text-slate-700 outline-none focus:border-cyan-500" 
-                    value={memorialName} 
-                    onChange={(e) => setMemorialName(e.target.value)} 
-                    onKeyDown={(e) => e.key === 'Enter' && updateMemorial()}
-                    autoFocus
-                  />
-                  <button onClick={updateMemorial} className="bg-cyan-500 text-white text-[10px] px-3 py-1.5 rounded-lg font-black uppercase shadow-lg shadow-cyan-500/20">Set</button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <h2 className="serif-font text-xl font-bold cyan-theme truncate">{data.deceasedName}</h2>
-                  <button onClick={() => setIsEditingMemorial(true)} className="text-slate-200 hover:text-cyan-400 transition-colors p-2">
-                    <i className="fas fa-pen-nib text-xs"></i>
-                  </button>
-                </div>
-              )}
+              <h2 className="serif-font text-2xl font-bold cyan-theme truncate tracking-wide">
+                {MEMORIAL_NAME}
+              </h2>
             </div>
           </div>
         </div>
@@ -317,7 +296,7 @@ const App: React.FC = () => {
           <i className="fas fa-heart hover:text-cyan-400 transition-colors cursor-help"></i>
         </div>
         <p className="text-[10px] uppercase font-black tracking-[0.8em] text-slate-400">Esal-e-Sawab • Sadaqah Jariyah</p>
-        <p className="text-[8px] text-slate-200 mt-4 uppercase tracking-[0.2em]">Data stored locally in browser • v1.4.1</p>
+        <p className="text-[8px] text-slate-200 mt-4 uppercase tracking-[0.2em]">Data stored locally in browser • v1.4.2</p>
       </footer>
     </div>
   );
