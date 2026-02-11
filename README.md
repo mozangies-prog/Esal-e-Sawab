@@ -1,31 +1,44 @@
-
 # Esal-e-Sawab Collective Tracker
 
-A production-ready spiritual platform for tracking collective recitations.
+A production-ready, highly stable spiritual platform for tracking collective recitations. Designed for deployment on **Railway** and **GitHub Pages**.
 
-## 🚀 Deployment to Railway
+## 🚀 One-Click Deployment to Railway
 
-1. **Connect Repository**: Connect your GitHub repository to Railway.
-2. **Environment Variables**: 
-   - Go to the **Variables** tab in your Railway project.
-   - Add `API_KEY` and paste your Google Gemini API key.
-3. **Build Command**: 
-   - If using Vite: `npm run build`
-   - If using a static setup: Ensure `index.html` is in the root.
-4. **Start Command**: 
-   - Use `serve -s .` or Railway's default static server.
+1. **GitHub Connection**: Push this code to your GitHub.
+2. **Railway Service**: Create a new project on Railway and select your repository.
+3. **Environment Variables**:
+   - Go to **Variables** in Railway.
+   - Add `API_KEY` (Get yours from [Google AI Studio](https://aistudio.google.com/app/apikey)).
+4. **Build & Start Settings**:
+   - Railway will automatically detect the `package.json`.
+   - **Start Command**: `npm start` (uses `serve` to handle routing).
 
-## 🛠 Troubleshooting Blank Screens
+## 🛠 Stability Features
 
-If the app shows a blank screen on Railway:
+- **HashRouter Implementation**: Prevents the "404 on Refresh" common with static hosting.
+- **Global Error Boundary**: Replaces blank screens with a user-friendly recovery UI.
+- **Native ESM**: No complex build/compilation steps that often break in CI/CD.
+- **Production Logger**: Detailed console logging for debugging production network and state issues.
+- **CORS Handling**: Optimized for browser-to-API communication.
 
-1. **Check Console**: Open Browser DevTools (F12). Look for `ReferenceError: process is not defined`. This app handles this by checking `typeof process`.
-2. **Missing API Key**: Ensure the `API_KEY` variable is set in the Railway dashboard.
-3. **MIME Types**: Ensure your hosting service serves `.js` files with the correct `application/javascript` header.
-4. **Import Maps**: This app uses Browser ESM. Ensure no build step is stripping the `<script type="importmap">` from `index.html`.
+## 📦 Deployment File Structure
 
-## 📦 Features
-- Grid/List View Switching
-- Compact, high-density UI
-- LocalStorage persistence (Private)
-- Global Error Boundary for stability
+- `index.html`: Main entry with import maps.
+- `App.tsx`: Central logic with production hardening.
+- `services/logger.ts`: Production monitoring.
+- `services/geminiService.ts`: Secure, error-handled AI integration.
+
+## 🧪 Local Production Test
+
+To test exactly how it will run on Railway:
+```bash
+npm install
+npm run build
+npm start
+```
+
+## ❓ Troubleshooting Blank Screens
+
+- **ReferenceError: process is not defined**: This app uses a strict check for `process.env`. Ensure your hosting environment doesn't strip `process`.
+- **Import Maps**: Some old browsers don't support import maps. This app is optimized for Chrome 89+, Safari 16.4+, and Firefox 108+.
+- **Missing API Key**: If the AI insight is missing, check your `API_KEY` variable. The app will NOT crash if the key is missing; it will show a default message.

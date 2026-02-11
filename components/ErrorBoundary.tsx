@@ -1,5 +1,5 @@
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -10,22 +10,33 @@ interface State {
   error: Error | null;
 }
 
-class ErrorBoundary extends Component<Props, State> {
+/**
+ * ErrorBoundary class component to catch and handle rendering errors in its child components.
+ * Explicitly extending React.Component<Props, State> ensures 'props' and 'state' are correctly typed.
+ */
+class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null,
   };
 
+  /**
+   * Update state so the next render will show the fallback UI.
+   */
   public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
+  /**
+   * Log error information to the console or an external service.
+   */
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
   public render() {
     if (this.state.hasError) {
+      // Fallback UI when an error occurs
       return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
           <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-red-100 p-8 text-center">
@@ -52,7 +63,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // Fix: Accessing children from props in class component
+    // Correctly return children from props when no error is present
     return this.props.children;
   }
 }
