@@ -1,35 +1,21 @@
 
 import { logger } from "./logger";
 
-/**
- * API_BASE determines where we send our data.
- * If VITE_API_URL is provided in Railway, we use it. 
- * Otherwise, we default to relative /api.
- */
 const API_BASE = (process.env.VITE_API_URL || '').replace(/\/$/, '') || "/api";
-const LOCAL_STORAGE_BACKUP = 'esal_sawab_offline_sync';
-
-// Internal helper to handle local fallback data
-const getLocalBackup = () => {
-  try {
-    const data = localStorage.getItem(LOCAL_STORAGE_BACKUP);
-    return data ? JSON.parse(data) : { grandTotal: 0, contributions: [] };
-  } catch {
-    return { grandTotal: 0, contributions: [] };
-  }
-};
 
 export const apiService = {
   /**
-   * Fetches stats. If MySQL is down, returns local data to keep UI functional.
+   * Fetches stats. Returns error object if server reports a DB failure.
    */
   async getStats() {
     try {
       const response = await fetch(`${API_BASE}/stats`);
-      if (!response.ok) return null;
-      return await response.json();
+      const data = await response.json();
+      if (!response.ok) {
+        return { error: data.error, detail: data.detail };
+      }
+      return data;
     } catch (error) {
-      // Silent fail - App.tsx handles the status change
       return null;
     }
   },
@@ -40,15 +26,16 @@ export const apiService = {
   async getContributions() {
     try {
       const response = await fetch(`${API_BASE}/contributions`);
+      const data = await response.json();
       if (!response.ok) return null;
-      return await response.json();
+      return data;
     } catch (error) {
       return null;
     }
   },
 
   /**
-   * Posts contribution. If server fails, saves to a local queue (conceptually).
+   * Posts contribution.
    */
   async postContribution(contribution: any) {
     try {
@@ -59,12 +46,12 @@ export const apiService = {
       });
       
       if (!response.ok) {
-        logger.warn("MySQL Sync failed (Status " + response.status + "). Saving locally.");
+        const data = await response.json();
+        logger.error("Sync Error:", data.detail || data.error);
         return false;
       }
       return true;
     } catch (error) {
-      // Connection refused or timeout
       return false;
     }
   }
