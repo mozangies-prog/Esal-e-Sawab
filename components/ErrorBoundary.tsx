@@ -1,5 +1,5 @@
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -12,16 +12,17 @@ interface State {
 
 /**
  * ErrorBoundary class component to catch and handle rendering errors in its child components.
- * Explicitly extending Component<Props, State> ensures 'props' and 'state' are correctly typed.
+ * Explicitly extending React.Component<Props, State> ensures 'props' and 'state' are correctly typed.
  */
-class ErrorBoundary extends Component<Props, State> {
-  // Explicit constructor helps avoid issues with 'props' access in certain environments
+class ErrorBoundary extends React.Component<Props, State> {
+  // Define state property explicitly for better type inference in TypeScript
+  public state: State = {
+    hasError: false,
+    error: null,
+  };
+
   constructor(props: Props) {
     super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-    };
   }
 
   /**
@@ -35,6 +36,7 @@ class ErrorBoundary extends Component<Props, State> {
    * Log error information to the console or an external service.
    */
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Log the error and the component stack
     console.error("Uncaught error:", error, errorInfo);
   }
 

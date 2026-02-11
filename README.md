@@ -1,39 +1,26 @@
+
 # Esal-e-Sawab Collective Tracker
 
-A production-ready, highly stable spiritual platform for tracking collective recitations. Designed for deployment on **Railway** and **GitHub Pages**.
+A production-ready spiritual platform for tracking collective recitations.
 
-## 🚀 One-Click Deployment to Railway
+## 🚀 Deployment to Railway
 
-1. **GitHub Connection**: Push this code to your GitHub.
-2. **Railway Service**: Create a new project on Railway and select your repository.
-3. **Environment Variables**:
-   - Go to **Variables** in Railway.
-   - Add `API_KEY` (Get yours from [Google AI Studio](https://aistudio.google.com/app/apikey)).
-4. **Build & Start Settings**:
-   - Railway will automatically detect the `package.json`.
-   - The app uses `serve` to handle routing stability.
-   - If Railway asks for a root directory, leave it as `/`.
+1. **Connect Repository**: Connect your GitHub repository to Railway.
+2. **Environment Variables**: 
+   - Add `API_KEY` in the **Variables** tab for Gemini AI features.
+3. **Build Settings**: 
+   - Railway will detect `package.json` and use `npm run build` (Vite).
+   - The build output will be in the `dist/` folder.
+4. **Start Command**: 
+   - The app uses `npm start` which runs `serve -s dist`.
 
-## 🛠 Stability Features
+## 🛠 Why Vite?
 
-- **HashRouter Implementation**: Prevents the "404 on Refresh" common with static hosting.
-- **Global Error Boundary**: Replaces blank screens with a user-friendly recovery UI.
-- **Native ESM**: No complex build/compilation steps that often break in CI/CD.
-- **Production Logger**: Detailed console logging for debugging production network and state issues.
-- **Zero-Config Build**: The `build` script is now compatible with standard Linux environments (Fixed `cp` command).
+- **Fixes MIME Errors**: Browsers cannot read `.tsx` files. Vite transpiles them to valid `.js` modules with correct MIME types.
+- **Production Tailwind**: Generates an optimized, small CSS bundle instead of using the heavy development CDN.
+- **Zero-Config Routing**: `HashRouter` combined with `serve -s` ensures the app never 404s on page refresh.
 
-## 🧪 Local Production Test
+## 📦 Troubleshooting
 
-To test exactly how it will run on Railway:
-```bash
-npm install
-npm run build
-# To test the build folder specifically:
-cd dist && npx serve -s .
-```
-
-## ❓ Troubleshooting
-
-- **Build Failure (`cp: unrecognized option`)**: This has been fixed in the latest `package.json`.
-- **ReferenceError: process is not defined**: This app uses a strict check for `process.env`. Ensure your hosting environment doesn't strip `process`.
-- **Missing API Key**: If the AI insight is missing, check your `API_KEY` variable. The app will NOT crash if the key is missing; it will show a default message.
+- **Blank Screen**: Check the browser console. If you see "process is not defined", Vite has already handled this via `define` or `import.meta.env`, but we use `process.env.API_KEY` which Vite handles automatically when configured via environment variables.
+- **MIME Type Error**: Resolved. Files are now served as `application/javascript` from the `dist` folder.
