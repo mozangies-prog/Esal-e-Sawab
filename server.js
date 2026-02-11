@@ -7,37 +7,28 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-
-// Railway provides the port via environment variable. 
-// Default to 3000 only for local testing.
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
-// 1. MySQL Connection Logic
+// 1. MySQL Connection
 let pool;
-
 const connectDB = async () => {
   if (!process.env.MYSQL_URL) {
-    console.error("[CRITICAL] process.env.MYSQL_URL is missing. Please add it to Railway Variables.");
+    console.error("[CRITICAL] MYSQL_URL is missing in environment variables.");
     return null;
   }
-
   try {
-    console.log("[DB] Connecting to MySQL...");
     pool = mysql.createPool({
       uri: process.env.MYSQL_URL,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
-      enableKeepAlive: true,
-      keepAliveInitialDelay: 10000
+      enableKeepAlive: true
     });
-
     const connection = await pool.getConnection();
-    console.log("[DB] ✅ Connection Established.");
-    
+    console.log("[DB] ✅ Connected to MySQL.");
     await connection.query(`
       CREATE TABLE IF NOT EXISTS contributions (
         id VARCHAR(255) PRIMARY KEY,
@@ -47,85 +38,53 @@ const connectDB = async () => {
         timestamp BIGINT NOT NULL
       )
     `);
-    console.log("[DB] ✅ Table Verified.");
     connection.release();
-    return pool;
   } catch (err) {
-    console.error("[DB ERROR] Connection failed:", err.message);
-    return null;
+    console.error("[DB ERROR]", err.message);
   }
 };
-
 connectDB();
 
-// 2. API Endpoints
-// Health check for Railway to verify the service is up
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    database: pool ? 'connected' : 'disconnected',
-    timestamp: new Date().toISOString() 
-  });
-});
+// 2. API
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 app.get('/api/stats', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: "Database not connected" });
-  
+  if (!pool) return res.status(503).json({ error: "No DB" });
   try {
     const [rows] = await pool.query('SELECT recitationType, SUM(count) as total FROM contributions GROUP BY recitationType');
     const [grandTotalRow] = await pool.query('SELECT SUM(count) as total FROM contributions');
-    
     const stats = { grandTotal: parseInt(grandTotalRow[0]?.total || 0) };
     rows.forEach(row => {
-      const key = `total_${row.recitationType.replace(/\s+/g, '_')}`;
-      stats[key] = parseInt(row.total);
+      stats[`total_${row.recitationType.replace(/\s+/g, '_')}`] = parseInt(row.total);
     });
-    
     res.json(stats);
-  } catch (err) {
-    res.status(500).json({ error: "Query failed", detail: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/contributions', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: "Database not connected" });
-  
+  if (!pool) return res.status(503).json({ error: "No DB" });
   try {
     const [rows] = await pool.query('SELECT * FROM contributions ORDER BY timestamp DESC LIMIT 50');
     res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: "Query failed", detail: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/contributions', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: "Database not connected" });
-  
+  if (!pool) return res.status(503).json({ error: "No DB" });
   const { id, contributorName, recitationType, count, timestamp } = req.body;
-  
   try {
-    await pool.query(
-      'INSERT INTO contributions (id, contributorName, recitationType, count, timestamp) VALUES (?, ?, ?, ?, ?)',
-      [id, contributorName, recitationType, count, timestamp]
-    );
+    await pool.query('INSERT INTO contributions VALUES (?, ?, ?, ?, ?)', [id, contributorName, recitationType, count, timestamp]);
     res.status(201).json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: "Insert failed", detail: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 3. Serve Frontend Assets
-// Ensure we serve files from the 'dist' directory created by Vite
+// 3. Static Assets (Production)
 const distPath = path.join(__dirname, 'dist');
 app.use(express.static(distPath));
-
-// Fallback: Handle SPA routing by serving index.html for all non-API requests
 app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-// IMPORTANT: Listen on '0.0.0.0' to allow Railway to expose the service to the internet
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[SERVER] 🚀 Publicly accessible on port ${PORT}`);
-  console.log(`[SERVER] Serving static files from: ${distPath}`);
+  console.log(`[SERVER] 🚀 Active on port ${PORT}`);
 });

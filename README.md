@@ -1,26 +1,27 @@
 
 # Esal-e-Sawab Collective Tracker
 
-A production-ready spiritual platform for tracking collective recitations.
+## 🌐 Solving the "Site Can't Be Reached" (NXDOMAIN) Error
 
-## 🚀 Deployment to Railway
+If you see `DNS_PROBE_FINISHED_NXDOMAIN`, it means the link you are sharing is an internal Railway name, not a public website link. Follow these steps to get the correct link:
 
-1. **Connect Repository**: Connect your GitHub repository to Railway.
-2. **Environment Variables**: 
-   - Add `API_KEY` in the **Variables** tab for Gemini AI features.
-3. **Build Settings**: 
-   - Railway will detect `package.json` and use `npm run build` (Vite).
-   - The build output will be in the `dist/` folder.
-4. **Start Command**: 
-   - The app uses `npm start` which runs `serve -s dist`.
+1.  Open your **Railway Dashboard**.
+2.  Click on your **App Service**.
+3.  Go to the **Settings** tab.
+4.  Scroll down to the **Networking** section.
+5.  Look for **Public Domain**. 
+    - If there is no domain, click **"Generate Domain"**.
+    - If there is a domain (e.g., `esal-sawab.up.railway.app`), **COPY THAT EXACT LINK**.
+6.  Share this generated domain with others. The internal links containing `-production-xxxx` will often fail on other devices.
 
-## 🛠 Why Vite?
+## 🛠 Setup Requirements
 
-- **Fixes MIME Errors**: Browsers cannot read `.tsx` files. Vite transpiles them to valid `.js` modules with correct MIME types.
-- **Production Tailwind**: Generates an optimized, small CSS bundle instead of using the heavy development CDN.
-- **Zero-Config Routing**: `HashRouter` combined with `serve -s` ensures the app never 404s on page refresh.
+1.  **MySQL Database**: Ensure you have a MySQL service added to your Railway project.
+2.  **Environment Variables**:
+    - `MYSQL_URL`: (Added automatically if using Railway MySQL).
+    - `API_KEY`: Your Google Gemini API Key for spiritual insights.
+3.  **Port**: The app automatically uses `process.env.PORT` provided by Railway.
 
-## 📦 Troubleshooting
-
-- **Blank Screen**: Check the browser console. If you see "process is not defined", Vite has already handled this via `define` or `import.meta.env`, but we use `process.env.API_KEY` which Vite handles automatically when configured via environment variables.
-- **MIME Type Error**: Resolved. Files are now served as `application/javascript` from the `dist` folder.
+## 🚀 How it Works
+- **Backend (`server.js`)**: A Node.js Express server that manages the MySQL database and serves the built frontend.
+- **Frontend (`App.tsx`)**: A React application that communicates with the backend for real-time collective sync.
