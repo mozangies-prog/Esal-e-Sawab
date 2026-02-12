@@ -8,10 +8,6 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
-/**
- * PORT 8080 is what your Railway dashboard shows. 
- * Defaulting to 8080 ensures it matches the internal routing.
- */
 const PORT = process.env.PORT || 8080;
 
 app.use(cors());
@@ -21,7 +17,7 @@ app.use(express.json());
 let pool;
 const connectDB = async () => {
   if (!process.env.MYSQL_URL) {
-    console.error("[CRITICAL] MYSQL_URL is missing. The app will run in 'Personal Mode' only.");
+    console.error("[CRITICAL] MYSQL_URL is missing.");
     return null;
   }
   try {
@@ -44,6 +40,7 @@ const connectDB = async () => {
         timestamp BIGINT NOT NULL
       )
     `);
+
     connection.release();
   } catch (err) {
     console.error("[DB ERROR]", err.message);
@@ -85,11 +82,9 @@ app.post('/api/contributions', async (req, res) => {
 });
 
 // 3. Static Asset Serving
-// Pointing to 'dist' which is the default Vite build output
 const distPath = path.join(__dirname, 'dist');
 app.use(express.static(distPath));
 
-// Fallback for SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });

@@ -29,3 +29,9 @@ export interface EsalData {
   passedDate: string;
   contributions: Contribution[];
 }
+
+// Added Goal interface to support GoalTracker component
+export interface Goal {
+  recitationType: RecitationType;
+  target: number;
+}
