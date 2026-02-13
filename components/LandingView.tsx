@@ -288,8 +288,24 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
           </div>
         </div>
 
-        {/* Footer Dedication - Simplified for Landing as requested */}
-        <footer className="mt-20 text-center px-4">
+        {/* Footer Dedication */}
+        <footer className="text-center py-16 mt-20 border-t border-slate-100/60 max-w-4xl mx-auto">
+          <div className="arabic-text text-lg text-slate-500 leading-relaxed mb-10" dir="rtl">
+             <div className="flex flex-col items-center space-y-4">
+               <p className="mb-4">
+                 اس ایپ پر تمام اذکار و پڑھائی کا ثواب حضرت آدم (ع) سے قیامت تک کے انبیاء، صحابہ کرام، اولیاء، صالحین، علمائے دین اور تمام مومنین و مومنات کو پہنچے۔
+               </p>
+               <p className="font-bold text-cyan-600/80">اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔</p>
+               
+               <div className="mt-8 flex flex-col items-center">
+                 <TasbeehLogo className="w-10 h-10 text-slate-300 mb-4 opacity-50" />
+                 <p className="font-bold text-slate-800 text-lg mb-1">محمد فیصل</p>
+                 <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">Founder Esal-e-Sawab</p>
+                 <p className="text-[10px] uppercase font-black tracking-[0.6em] text-cyan-500 mt-4">Sadaqah Jariyah Platform</p>
+               </div>
+             </div>
+          </div>
+          
           <p className="text-[10px] uppercase font-black tracking-[0.8em] text-slate-300 mt-12">Privacy First • Community Driven • Eternal Rewards</p>
         </footer>
       </div>
