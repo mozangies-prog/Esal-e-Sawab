@@ -15,6 +15,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
   
   const [newName, setNewName] = useState('');
   const [newLocation, setNewLocation] = useState('');
+  const [newPassedDate, setNewPassedDate] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
@@ -35,7 +36,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
     e.preventDefault();
     if (!newName.trim() || !newLocation.trim()) return;
     setIsCreating(true);
-    const result = await apiService.createDescent(newName, newLocation);
+    const result = await apiService.createDescent(newName, newLocation, newPassedDate);
     if (result) {
       onSelectFamily(result);
     }
@@ -122,17 +123,28 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                   type="text" 
                   placeholder="e.g. Chaudhary Liaqat Ali" 
                   value={newName}
+                  required
                   onChange={(e) => setNewName(e.target.value)}
                   className="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:border-cyan-400 transition-all text-sm font-bold text-slate-700"
                 />
               </div>
               <div>
-                <label className="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Location (To differentiate)</label>
+                <label className="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Location / Area</label>
                 <input 
                   type="text" 
                   placeholder="e.g. Mozang, Lahore" 
                   value={newLocation}
+                  required
                   onChange={(e) => setNewLocation(e.target.value)}
+                  className="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:border-cyan-400 transition-all text-sm font-bold text-slate-700"
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Date of Death (Optional)</label>
+                <input 
+                  type="date" 
+                  value={newPassedDate}
+                  onChange={(e) => setNewPassedDate(e.target.value)}
                   className="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:border-cyan-400 transition-all text-sm font-bold text-slate-700"
                 />
               </div>

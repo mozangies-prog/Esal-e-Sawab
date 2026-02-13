@@ -15,11 +15,14 @@ interface State {
  * Explicitly extends React.Component to ensure proper inheritance of state and props.
  */
 class ErrorBoundary extends React.Component<Props, State> {
-  // Fix: Explicitly declare the state property to ensure it is recognized by the compiler
-  public state: State = {
-    hasError: false,
-    error: null,
-  };
+  // Add constructor to properly initialize props and state, ensuring 'this.props' is recognized by TypeScript
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+    };
+  }
 
   /**
    * Update state so the next render will show the fallback UI.
@@ -38,7 +41,7 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   // Render method returns the fallback UI if an error occurred, otherwise the children
   public render(): ReactNode {
-    // Fix: access state properties through this.state which is now correctly inherited
+    // Access state properties through this.state
     if (this.state.hasError) {
       // Fallback UI when an error occurs
       return (
@@ -67,7 +70,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // Fix: Accessing children from props inherited from React.Component
+    // Accessing children from props inherited from React.Component
     return this.props.children;
   }
 }

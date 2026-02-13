@@ -31,15 +31,23 @@ const connectDB = async () => {
     const connection = await pool.getConnection();
     console.log("[DB] ✅ Connection Successful.");
     
-    // Create tables
+    // Create tables with passedDate
     await connection.query(`
       CREATE TABLE IF NOT EXISTS descents (
         id VARCHAR(255) PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         location VARCHAR(255) NOT NULL,
+        passedDate VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Ensure passedDate exists if table was created previously
+    try {
+      await connection.query('ALTER TABLE descents ADD COLUMN passedDate VARCHAR(255)');
+    } catch (e) {
+      // Column likely already exists
+    }
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS contributions (
@@ -74,12 +82,12 @@ app.get('/api/descents/search', async (req, res) => {
 });
 
 app.post('/api/descents', async (req, res) => {
-  const { name, location } = req.body;
+  const { name, location, passedDate } = req.body;
   const id = uuidv4();
   if (!pool) return res.status(503).json({ error: "DB not connected" });
   try {
-    await pool.query('INSERT INTO descents (id, name, location) VALUES (?, ?, ?)', [id, name, location]);
-    res.json({ id, name, location });
+    await pool.query('INSERT INTO descents (id, name, location, passedDate) VALUES (?, ?, ?, ?)', [id, name, location, passedDate]);
+    res.json({ id, name, location, passedDate });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

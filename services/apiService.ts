@@ -15,12 +15,12 @@ export const apiService = {
     }
   },
 
-  async createDescent(name: string, location: string): Promise<Descent | null> {
+  async createDescent(name: string, location: string, passedDate: string): Promise<Descent | null> {
     try {
       const response = await fetch(`${API_BASE}/descents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, location })
+        body: JSON.stringify({ name, location, passedDate })
       });
       if (!response.ok) return null;
       return await response.json();
@@ -32,11 +32,13 @@ export const apiService = {
   async getStats(familyId: string) {
     try {
       const response = await fetch(`${API_BASE}/stats/${familyId}`);
-      const data = await response.json();
-      if (!response.ok) return { error: data.error };
-      return data;
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        return { error: data.error || `Server Error ${response.status}` };
+      }
+      return await response.json();
     } catch (error) {
-      return null;
+      return { error: "Network Error" };
     }
   },
 
