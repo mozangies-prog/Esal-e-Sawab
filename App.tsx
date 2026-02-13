@@ -11,6 +11,7 @@ import { apiService } from './services/apiService';
 
 const VIEW_KEY = 'esal_view_mode';
 const FAMILY_KEY = 'esal_current_family';
+const USER_NAME_KEY = 'esal_user_name';
 
 const POLLING_FAST = 5000;
 const POLLING_SLOW = 20000;
@@ -38,7 +39,7 @@ const App: React.FC = () => {
   });
 
   const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => 
     (localStorage.getItem(VIEW_KEY) as 'grid' | 'list') || 'grid'
@@ -51,9 +52,10 @@ const App: React.FC = () => {
   
   const isCollective = syncStatus === 'collective';
 
+  // Fix: Explicitly type 'n' as string to resolve "Property 'length' does not exist on type 'unknown'" error on line 57
   const familyMembers = useMemo(() => {
     const names = contributions.map(c => c.contributorName);
-    return Array.from(new Set(names)).sort();
+    return Array.from(new Set(names)).filter((n: string) => n.length > 0).sort();
   }, [contributions]);
 
   const syncWithServer = async () => {
@@ -84,6 +86,7 @@ const App: React.FC = () => {
   }, [currentFamily, isCollective]);
 
   useEffect(() => { localStorage.setItem(VIEW_KEY, viewMode); }, [viewMode]);
+  useEffect(() => { localStorage.setItem(USER_NAME_KEY, userName); }, [userName]);
   useEffect(() => {
     if (currentFamily) localStorage.setItem(FAMILY_KEY, JSON.stringify(currentFamily));
     else localStorage.removeItem(FAMILY_KEY);
@@ -106,6 +109,7 @@ const App: React.FC = () => {
       timestamp: Date.now()
     };
     setLastAddedId(newContrib.id);
+    // Optimistic update
     setContributions(prev => [newContrib, ...prev]);
     const success = await apiService.postContribution(newContrib);
     if (success) syncWithServer();
@@ -172,9 +176,13 @@ const App: React.FC = () => {
               type="text"
               placeholder="Your name..."
               value={userName}
+              list={`family-members-${currentFamily.id}`}
               onChange={(e) => setUserName(e.target.value)}
               className="w-full bg-slate-50/50 rounded-xl px-4 py-3 outline-none text-slate-700 font-bold text-sm focus:border-cyan-400 focus:bg-white border border-transparent transition-all shadow-inner"
             />
+            <datalist id={`family-members-${currentFamily.id}`}>
+              {familyMembers.map(name => <option key={name} value={name} />)}
+            </datalist>
           </div>
         </div>
         <div className="flex bg-slate-100/50 rounded-2xl p-1.5 border border-slate-200/50 w-full md:w-auto">
@@ -194,7 +202,7 @@ const App: React.FC = () => {
         ))}
       </div>
 
-      {/* Activity Logs */}
+      {/* Activity Logs - Updated to hide specific names and include 'Contributed' label */}
       <div className="bg-white rounded-[2.5rem] border border-cyan-50 p-6 sm:p-10 shadow-sm max-w-6xl mx-auto mb-10">
         <h2 className="text-base sm:text-xl font-black text-slate-800 uppercase tracking-widest mb-6">Recent Participation</h2>
         <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar no-scrollbar">
@@ -206,9 +214,14 @@ const App: React.FC = () => {
             <div className="space-y-3">
               {contributions.slice(0, 30).map((c) => (
                 <div key={c.id} className="flex justify-between items-center p-4 rounded-2xl bg-slate-50/50 border border-transparent hover:bg-white hover:border-cyan-100 hover:shadow-sm transition-all">
-                  <div>
-                    <p className="text-sm font-black text-slate-800 leading-none mb-1">{c.contributorName}</p>
-                    <p className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">{c.recitationType}</p>
+                  <div className="flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+                    <div>
+                      <p className="text-sm font-black text-slate-800 leading-none mb-1">
+                        <span className="text-cyan-500 mr-2">Contributed</span> {c.count.toLocaleString()}x {c.recitationType}
+                      </p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Added by a Family Member</p>
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="text-[9px] text-slate-300 font-bold uppercase">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
