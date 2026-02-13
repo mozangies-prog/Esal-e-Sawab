@@ -1,19 +1,19 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { RecitationType, Contribution, EsalData } from './types';
+import { RecitationType, Contribution, EsalData, Descent } from './types';
 import { RECITATIONS } from './constants';
 import RecitationCard from './components/RecitationCard';
 import RecitationCharts from './components/RecitationCharts';
+import LandingView from './components/LandingView';
 import { getSpiritualInsight } from './services/geminiService';
 import { logger } from './services/logger';
 import { apiService } from './services/apiService';
 
-const STORAGE_KEY = 'esal_sawab_v2';
+const STORAGE_KEY_CONTRIBS = 'esal_sawab_v2_contribs';
 const USER_KEY = 'esal_user_name';
 const VIEW_KEY = 'esal_view_mode';
+const FAMILY_KEY = 'esal_current_family';
 
-const MEMORIAL_NAME = 'Chaudhary Liaqat Ali';
-const PASSED_DATE = '2023-02-11'; 
 const POLLING_FAST = 5000;
 const POLLING_SLOW = 20000;
 
@@ -26,24 +26,12 @@ const FAMILY_NAMES = [
 ];
 
 const App: React.FC = () => {
-  const [localData, setLocalData] = useState<EsalData>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return { 
-          ...parsed, 
-          deceasedName: MEMORIAL_NAME, 
-          passedDate: PASSED_DATE,
-          contributions: parsed.contributions || []
-        };
-      }
-    } catch (e) {
-      logger.debug("Starting with clean local state");
-    }
-    return { deceasedName: MEMORIAL_NAME, passedDate: PASSED_DATE, contributions: [] };
+  const [currentFamily, setCurrentFamily] = useState<Descent | null>(() => {
+    const saved = localStorage.getItem(FAMILY_KEY);
+    return saved ? JSON.parse(saved) : null;
   });
 
+  const [contributions, setContributions] = useState<Contribution[]>([]);
   const [userName, setUserName] = useState(() => localStorage.getItem(USER_KEY) || '');
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => 
@@ -57,7 +45,8 @@ const App: React.FC = () => {
   const isCollective = syncStatus === 'collective';
 
   const anniversaryInfo = useMemo(() => {
-    const passed = new Date(localData.passedDate);
+    if (!currentFamily?.passedDate) return null;
+    const passed = new Date(currentFamily.passedDate);
     const today = new Date();
     const currentToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const currentYear = today.getFullYear();
@@ -72,19 +61,21 @@ const App: React.FC = () => {
     const isToday = today.getMonth() === passed.getMonth() && today.getDate() === passed.getDate();
     
     return { days, isToday, dateLabel: passed.toLocaleDateString([], { day: 'numeric', month: 'long' }) };
-  }, [localData.passedDate]);
+  }, [currentFamily]);
 
   const syncWithServer = async () => {
-    const statsResult = await apiService.getStats();
+    if (!currentFamily) return;
+
+    const statsResult = await apiService.getStats(currentFamily.id);
     if (statsResult && statsResult.error) {
       setSyncStatus('unavailable');
       return;
     }
 
-    const contribs = await apiService.getContributions();
-    if (statsResult && !statsResult.error && contribs) {
+    const remoteContribs = await apiService.getContributions(currentFamily.id);
+    if (statsResult && !statsResult.error && remoteContribs) {
       setGlobalStats(statsResult);
-      setLocalData(prev => ({ ...prev, contributions: contribs }));
+      setContributions(remoteContribs);
       setSyncStatus('collective');
     } else {
       if (syncStatus !== 'unavailable' && syncStatus !== 'personal') {
@@ -94,13 +85,22 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    syncWithServer();
-    const interval = setInterval(syncWithServer, isCollective ? POLLING_FAST : POLLING_SLOW);
-    return () => clearInterval(interval);
-  }, [isCollective]);
+    if (currentFamily) {
+      syncWithServer();
+      const interval = setInterval(syncWithServer, isCollective ? POLLING_FAST : POLLING_SLOW);
+      return () => clearInterval(interval);
+    }
+  }, [currentFamily, isCollective]);
 
   useEffect(() => { localStorage.setItem(USER_KEY, userName); }, [userName]);
   useEffect(() => { localStorage.setItem(VIEW_KEY, viewMode); }, [viewMode]);
+  useEffect(() => {
+    if (currentFamily) {
+      localStorage.setItem(FAMILY_KEY, JSON.stringify(currentFamily));
+    } else {
+      localStorage.removeItem(FAMILY_KEY);
+    }
+  }, [currentFamily]);
 
   const handleAdd = async (type: RecitationType, count: number) => {
     const trimmedName = userName.trim();
@@ -110,8 +110,11 @@ const App: React.FC = () => {
       return;
     }
 
-    const newContrib = {
+    if (!currentFamily) return;
+
+    const newContrib: Contribution = {
       id: crypto.randomUUID(),
+      family_id: currentFamily.id,
       contributorName: trimmedName,
       recitationType: type,
       count: count,
@@ -119,11 +122,7 @@ const App: React.FC = () => {
     };
 
     setLastAddedId(newContrib.id);
-
-    const updatedContribs = [newContrib, ...localData.contributions];
-    const updatedData = { ...localData, contributions: updatedContribs };
-    setLocalData(updatedData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+    setContributions(prev => [newContrib, ...prev]);
 
     const success = await apiService.postContribution(newContrib);
     if (success) syncWithServer();
@@ -141,18 +140,22 @@ const App: React.FC = () => {
         const dbKey = `total_${t.replace(/\s+/g, '_')}`;
         map[t] = globalStats[dbKey] || 0;
       } else {
-        map[t] = localData.contributions
+        map[t] = contributions
           .filter(c => c.recitationType === t)
           .reduce((sum, c) => sum + c.count, 0);
       }
     });
     return map;
-  }, [globalStats, localData.contributions, isCollective]);
+  }, [globalStats, contributions, isCollective]);
 
   const grandTotal = isCollective ? (globalStats?.grandTotal || 0) : (Object.values(totals) as number[]).reduce((a: number, b: number) => a + b, 0);
 
+  if (!currentFamily) {
+    return <LandingView onSelectFamily={setCurrentFamily} />;
+  }
+
   return (
-    <div className="min-h-screen pb-12 px-3 sm:px-6 lg:px-8 pt-4 max-w-[1600px] mx-auto transition-all">
+    <div className="min-h-screen pb-12 px-3 sm:px-6 lg:px-8 pt-4 max-w-[1600px] mx-auto transition-all animate-in fade-in duration-700">
       {/* Sync Banner */}
       {syncStatus === 'unavailable' && (
         <div className="mb-4 bg-slate-800 text-white rounded-xl p-3 shadow-lg border-b-2 border-slate-900">
@@ -182,7 +185,15 @@ const App: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-center gap-6 mb-8">
         <div className="text-center lg:text-left">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold cyan-theme serif-font mb-1">Esal-e-Sawab</h1>
+          <div className="flex items-center gap-4 justify-center lg:justify-start mb-1">
+             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold cyan-theme serif-font">Esal-e-Sawab</h1>
+             <button 
+                onClick={() => setCurrentFamily(null)}
+                className="text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 px-3 py-1 rounded-full hover:bg-slate-200 transition-colors"
+             >
+                Switch Family
+             </button>
+          </div>
           <div className="flex items-center gap-2 justify-center lg:justify-start">
             <span className={`w-1.5 h-1.5 rounded-full ${isCollective ? 'bg-green-400 animate-pulse' : syncStatus === 'unavailable' ? 'bg-slate-400' : 'bg-orange-400'}`}></span>
             <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest">
@@ -197,41 +208,45 @@ const App: React.FC = () => {
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-cyan-50 p-2.5 px-5 min-w-[200px] flex flex-col items-center lg:items-start">
             <p className="text-[9px] font-bold text-slate-300 uppercase">In Memory Of</p>
-            <h2 className="serif-font text-xl sm:text-2xl font-bold cyan-theme truncate tracking-wide">{MEMORIAL_NAME}</h2>
+            <h2 className="serif-font text-xl sm:text-2xl font-bold cyan-theme truncate tracking-wide">
+              {currentFamily.name} <span className="text-slate-400 text-base font-medium">({currentFamily.location})</span>
+            </h2>
           </div>
         </div>
       </div>
 
-      {/* Anniversary Reminder */}
-      <div className={`mb-8 p-6 rounded-3xl border transition-all duration-700 ${anniversaryInfo.isToday ? 'bg-cyan-500 border-cyan-400 shadow-xl shadow-cyan-500/20' : 'bg-white border-cyan-50 shadow-sm'}`}>
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl shadow-inner ${anniversaryInfo.isToday ? 'bg-white/20 text-white' : 'bg-cyan-50 text-cyan-500'}`}>
-              <i className="fas fa-calendar-check"></i>
-            </div>
-            <div>
-              <h3 className={`text-lg font-black uppercase tracking-widest ${anniversaryInfo.isToday ? 'text-white' : 'text-slate-800'}`}>
-                {anniversaryInfo.isToday ? "Today is the Anniversary" : "Anniversary Reminder"}
-              </h3>
-              <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${anniversaryInfo.isToday ? 'text-cyan-50' : 'text-slate-400'}`}>
-                Observance Date: {anniversaryInfo.dateLabel}
-              </p>
-            </div>
-          </div>
-          <div className="text-center md:text-right">
-            {anniversaryInfo.isToday ? (
-              <div className="px-6 py-2 bg-white rounded-full text-cyan-600 font-black text-xs uppercase tracking-widest animate-pulse">
-                Special Day of Remembrance
+      {/* Anniversary Reminder (If date exists) */}
+      {anniversaryInfo && (
+        <div className={`mb-8 p-6 rounded-3xl border transition-all duration-700 ${anniversaryInfo.isToday ? 'bg-cyan-500 border-cyan-400 shadow-xl shadow-cyan-500/20' : 'bg-white border-cyan-50 shadow-sm'}`}>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl shadow-inner ${anniversaryInfo.isToday ? 'bg-white/20 text-white' : 'bg-cyan-50 text-cyan-500'}`}>
+                <i className="fas fa-calendar-check"></i>
               </div>
-            ) : (
-              <div className="flex flex-col items-center md:items-end">
-                <span className="text-2xl font-black text-cyan-500 leading-none">{anniversaryInfo.days}</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Days Remaining</span>
+              <div>
+                <h3 className={`text-lg font-black uppercase tracking-widest ${anniversaryInfo.isToday ? 'text-white' : 'text-slate-800'}`}>
+                  {anniversaryInfo.isToday ? "Today is the Anniversary" : "Anniversary Reminder"}
+                </h3>
+                <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${anniversaryInfo.isToday ? 'text-cyan-50' : 'text-slate-400'}`}>
+                  Observance Date: {anniversaryInfo.dateLabel}
+                </p>
               </div>
-            )}
+            </div>
+            <div className="text-center md:text-right">
+              {anniversaryInfo.isToday ? (
+                <div className="px-6 py-2 bg-white rounded-full text-cyan-600 font-black text-xs uppercase tracking-widest animate-pulse">
+                  Special Day of Remembrance
+                </div>
+              ) : (
+                <div className="flex flex-col items-center md:items-end">
+                  <span className="text-2xl font-black text-cyan-500 leading-none">{anniversaryInfo.days}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Days Remaining</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* User Input Bar */}
       <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 border border-cyan-50 flex flex-col md:flex-row items-center justify-between gap-6 mb-8 shadow-sm">
@@ -279,14 +294,14 @@ const App: React.FC = () => {
           </div>
         </div>
         <div className="max-h-[350px] overflow-y-auto pr-2 custom-scrollbar no-scrollbar">
-          {localData.contributions.length === 0 ? (
+          {contributions.length === 0 ? (
             <div className="text-center py-12 opacity-30">
               <i className="fas fa-dove text-3xl mb-3"></i>
               <p className="text-slate-400 text-xs italic font-medium">No activity yet. Be the first to recite.</p>
             </div>
           ) : (
             <div className="space-y-2">
-              {localData.contributions.slice(0, 50).map((c) => (
+              {contributions.slice(0, 50).map((c) => (
                 <div key={c.id} className={`flex justify-between items-center p-3 px-4 rounded-xl bg-slate-50 border border-transparent transition-all ${lastAddedId === c.id ? 'bg-cyan-50 border-cyan-200' : ''}`}>
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center border text-[10px] ${lastAddedId === c.id ? 'bg-cyan-500 text-white border-cyan-400' : 'bg-white text-slate-300 border-slate-100'}`}>
@@ -310,7 +325,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <RecitationCharts contributions={localData.contributions} />
+      <RecitationCharts contributions={contributions} />
 
       <footer className="text-center py-10 mt-10 border-t border-slate-100">
         <p className="text-[9px] uppercase font-black tracking-[0.6em] text-slate-300">Esal-e-Sawab • Sadaqah Jariyah</p>

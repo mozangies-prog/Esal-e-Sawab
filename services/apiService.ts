@@ -1,43 +1,56 @@
 
 import { logger } from "./logger";
+import { Contribution, Descent } from "../types";
 
 const API_BASE = (process.env.VITE_API_URL || '').replace(/\/$/, '') || "/api";
 
 export const apiService = {
-  /**
-   * Fetches stats. Returns error object if server reports a DB failure.
-   */
-  async getStats() {
+  async searchDescents(query: string): Promise<Descent[]> {
     try {
-      const response = await fetch(`${API_BASE}/stats`);
-      const data = await response.json();
-      if (!response.ok) {
-        return { error: data.error, detail: data.detail };
-      }
-      return data;
+      const response = await fetch(`${API_BASE}/descents/search?q=${encodeURIComponent(query)}`);
+      if (!response.ok) return [];
+      return await response.json();
     } catch (error) {
-      return null;
+      return [];
     }
   },
 
-  /**
-   * Fetches contributions.
-   */
-  async getContributions() {
+  async createDescent(name: string, location: string): Promise<Descent | null> {
     try {
-      const response = await fetch(`${API_BASE}/contributions`);
-      const data = await response.json();
+      const response = await fetch(`${API_BASE}/descents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, location })
+      });
       if (!response.ok) return null;
+      return await response.json();
+    } catch (error) {
+      return null;
+    }
+  },
+
+  async getStats(familyId: string) {
+    try {
+      const response = await fetch(`${API_BASE}/stats/${familyId}`);
+      const data = await response.json();
+      if (!response.ok) return { error: data.error };
       return data;
     } catch (error) {
       return null;
     }
   },
 
-  /**
-   * Posts contribution.
-   */
-  async postContribution(contribution: any) {
+  async getContributions(familyId: string) {
+    try {
+      const response = await fetch(`${API_BASE}/contributions/${familyId}`);
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (error) {
+      return null;
+    }
+  },
+
+  async postContribution(contribution: Contribution) {
     try {
       const response = await fetch(`${API_BASE}/contributions`, {
         method: 'POST',

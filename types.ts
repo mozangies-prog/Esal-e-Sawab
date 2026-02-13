@@ -15,6 +15,13 @@ export enum RecitationType {
   ALLAHU_AKBAR = 'Allahu Akbar'
 }
 
+export interface Descent {
+  id: string;
+  name: string;
+  location: string;
+  passedDate?: string;
+}
+
 export interface RecitationInfo {
   id: RecitationType;
   title: string;
@@ -24,6 +31,7 @@ export interface RecitationInfo {
 
 export interface Contribution {
   id: string;
+  family_id: string;
   contributorName: string;
   recitationType: RecitationType;
   count: number;
