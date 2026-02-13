@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { RecitationType, Contribution, EsalData } from './types';
 import { RECITATIONS } from './constants';
 import RecitationCard from './components/RecitationCard';
+import RecitationCharts from './components/RecitationCharts';
 import { getSpiritualInsight } from './services/geminiService';
 import { logger } from './services/logger';
 import { apiService } from './services/apiService';
@@ -12,6 +13,7 @@ const USER_KEY = 'esal_user_name';
 const VIEW_KEY = 'esal_view_mode';
 
 const MEMORIAL_NAME = 'Chaudhary Liaqat Ali';
+const PASSED_DATE = '2023-08-15'; // Placeholder: User can update this
 const POLLING_FAST = 5000;
 const POLLING_SLOW = 20000;
 
@@ -24,13 +26,14 @@ const App: React.FC = () => {
         return { 
           ...parsed, 
           deceasedName: MEMORIAL_NAME, 
+          passedDate: parsed.passedDate || PASSED_DATE,
           contributions: parsed.contributions || []
         };
       }
     } catch (e) {
       logger.debug("Starting with clean local state");
     }
-    return { deceasedName: MEMORIAL_NAME, passedDate: '', contributions: [] };
+    return { deceasedName: MEMORIAL_NAME, passedDate: PASSED_DATE, contributions: [] };
   });
 
   const [userName, setUserName] = useState(() => localStorage.getItem(USER_KEY) || '');
@@ -44,6 +47,23 @@ const App: React.FC = () => {
   const [aiInsight, setAiInsight] = useState<string>("Bismillah. Your collective prayers are a gift that transcends this world.");
   
   const isCollective = syncStatus === 'collective';
+
+  const anniversaryInfo = useMemo(() => {
+    const passed = new Date(localData.passedDate);
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    
+    let next = new Date(currentYear, passed.getMonth(), passed.getDate());
+    if (next < today && next.toDateString() !== today.toDateString()) {
+      next = new Date(currentYear + 1, passed.getMonth(), passed.getDate());
+    }
+    
+    const diff = next.getTime() - today.getTime();
+    const days = Math.ceil(diff / (1000 * 3600 * 24));
+    const isToday = today.getMonth() === passed.getMonth() && today.getDate() === passed.getDate();
+    
+    return { days, isToday, dateLabel: passed.toLocaleDateString([], { day: 'numeric', month: 'long' }) };
+  }, [localData.passedDate]);
 
   const syncWithServer = async () => {
     const statsResult = await apiService.getStats();
@@ -75,8 +95,13 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [isCollective]);
 
-  useEffect(() => localStorage.setItem(USER_KEY, userName), [userName]);
-  useEffect(() => localStorage.setItem(VIEW_KEY, viewMode), [viewMode]);
+  useEffect(() => {
+    localStorage.setItem(USER_KEY, userName);
+  }, [userName]);
+
+  useEffect(() => {
+    localStorage.setItem(VIEW_KEY, viewMode);
+  }, [viewMode]);
 
   const handleAdd = async (type: RecitationType, count: number) => {
     if (!userName.trim()) {
@@ -95,13 +120,11 @@ const App: React.FC = () => {
 
     setLastAddedId(newContrib.id);
 
-    // Optimistic UI Update
     const updatedContribs = [newContrib, ...localData.contributions];
     const updatedData = { ...localData, contributions: updatedContribs };
     setLocalData(updatedData);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
 
-    // Server Update
     const success = await apiService.postContribution(newContrib);
     if (success) syncWithServer();
 
@@ -181,6 +204,40 @@ const App: React.FC = () => {
         </div>
       </div>
 
+      {/* Anniversary Reminder Section */}
+      <div className={`mb-8 p-6 rounded-3xl border transition-all duration-700 ${anniversaryInfo.isToday ? 'bg-cyan-500 border-cyan-400 shadow-xl shadow-cyan-500/20' : 'bg-white border-cyan-50 shadow-sm'}`}>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl shadow-inner ${anniversaryInfo.isToday ? 'bg-white/20 text-white' : 'bg-cyan-50 text-cyan-500'}`}>
+              <i className="fas fa-calendar-check"></i>
+            </div>
+            <div>
+              <h3 className={`text-lg font-black uppercase tracking-widest ${anniversaryInfo.isToday ? 'text-white' : 'text-slate-800'}`}>
+                {anniversaryInfo.isToday ? "Today is the Anniversary" : "Anniversary Reminder"}
+              </h3>
+              <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${anniversaryInfo.isToday ? 'text-cyan-50' : 'text-slate-400'}`}>
+                Observance Date: {anniversaryInfo.dateLabel}
+              </p>
+            </div>
+          </div>
+          <div className="text-center md:text-right">
+            {anniversaryInfo.isToday ? (
+              <div className="px-6 py-2 bg-white rounded-full text-cyan-600 font-black text-xs uppercase tracking-widest animate-pulse">
+                Special Day of Remembrance
+              </div>
+            ) : (
+              <div className="flex flex-col items-center md:items-end">
+                <span className="text-2xl font-black text-cyan-500 leading-none">{anniversaryInfo.days}</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Days Remaining</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics Tabs Section */}
+      <RecitationCharts contributions={localData.contributions} />
+
       {/* User Input Bar */}
       <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 border border-cyan-50 flex flex-col md:flex-row items-center justify-between gap-6 mb-8 shadow-sm">
         <div className="flex items-center gap-4 w-full max-w-md">
@@ -210,7 +267,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Cards - Responsive Grid for many cards */}
+      {/* Cards */}
       <div className={`grid gap-3 mb-10 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' : 'grid-cols-1'}`}>
         {RECITATIONS.map((rec) => (
           <RecitationCard key={rec.id} info={rec} totalCount={totals[rec.id] || 0} onAdd={(count) => handleAdd(rec.id, count)} isListView={viewMode === 'list'} />
@@ -228,7 +285,7 @@ const App: React.FC = () => {
           </div>
         </div>
         
-        <div className="max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="max-h-[350px] overflow-y-auto pr-2 custom-scrollbar no-scrollbar">
           {localData.contributions.length === 0 ? (
             <div className="text-center py-12 opacity-30">
               <i className="fas fa-dove text-3xl mb-3"></i>

@@ -30,9 +30,6 @@ export interface Contribution {
   timestamp: number;
 }
 
-/**
- * Fix: Interface representing a recitation goal, required by GoalTracker
- */
 export interface Goal {
   recitationType: RecitationType;
   target: number;
@@ -40,6 +37,11 @@ export interface Goal {
 
 export interface EsalData {
   deceasedName: string;
-  passedDate: string;
+  passedDate: string; // ISO format YYYY-MM-DD
   contributions: Contribution[];
+}
+
+export interface ChartPoint {
+  label: string;
+  value: number;
 }
