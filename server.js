@@ -53,6 +53,7 @@ const connectDB = async () => {
     `);
 
     // --- AUTOMATIC MIGRATIONS ---
+    // Safely add columns if they are missing
     try {
       const [columns] = await connection.query('SHOW COLUMNS FROM descents LIKE "passedDate"');
       if (Array.isArray(columns) && columns.length === 0) {
@@ -68,17 +69,7 @@ const connectDB = async () => {
       }
     } catch (e) {}
 
-    // --- ENFORCED DATABASE RESET ---
-    // User explicitly requested to remove 'Chaudhary Liaqat Ali' and all other previous data.
-    try {
-      await connection.query('SET FOREIGN_KEY_CHECKS = 0');
-      await connection.query('TRUNCATE TABLE contributions');
-      await connection.query('TRUNCATE TABLE descents');
-      await connection.query('SET FOREIGN_KEY_CHECKS = 1');
-      console.log("[DB] ⚠️ SUCCESS: All legacy data including 'Chaudhary Liaqat Ali' has been purged from the database.");
-    } catch (resetErr) {
-      console.error("[DB] Purge error:", resetErr.message);
-    }
+    // DATA RESET LOGIC REMOVED: Your data is now safe and persistent.
 
     connection.release();
   } catch (err) {
