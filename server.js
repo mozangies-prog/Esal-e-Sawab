@@ -32,7 +32,6 @@ const connectDB = async () => {
     const connection = await pool.getConnection();
     console.log("[DB] ✅ Connection Successful.");
     
-    // Create tables if they don't exist
     await connection.query(`
       CREATE TABLE IF NOT EXISTS descents (
         id VARCHAR(255) PRIMARY KEY,
@@ -45,6 +44,7 @@ const connectDB = async () => {
     await connection.query(`
       CREATE TABLE IF NOT EXISTS contributions (
         id VARCHAR(255) PRIMARY KEY,
+        family_id VARCHAR(255) NOT NULL,
         contributorName VARCHAR(255) NOT NULL,
         recitationType VARCHAR(255) NOT NULL,
         count INT NOT NULL,
@@ -52,24 +52,12 @@ const connectDB = async () => {
       )
     `);
 
-    // --- AUTOMATIC MIGRATIONS ---
-    // Safely add columns if they are missing
     try {
       const [columns] = await connection.query('SHOW COLUMNS FROM descents LIKE "passedDate"');
       if (Array.isArray(columns) && columns.length === 0) {
         await connection.query('ALTER TABLE descents ADD COLUMN passedDate VARCHAR(255)');
       }
     } catch (e) {}
-
-    try {
-      const [columns] = await connection.query('SHOW COLUMNS FROM contributions LIKE "family_id"');
-      if (Array.isArray(columns) && columns.length === 0) {
-        await connection.query('ALTER TABLE contributions ADD COLUMN family_id VARCHAR(255) NOT NULL AFTER id');
-        await connection.query('CREATE INDEX idx_family ON contributions(family_id)');
-      }
-    } catch (e) {}
-
-    // DATA RESET LOGIC REMOVED: Your data is now safe and persistent.
 
     connection.release();
   } catch (err) {
@@ -78,7 +66,14 @@ const connectDB = async () => {
 };
 connectDB();
 
-// Descents (Family) Endpoints
+app.get('/api/global-stats', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: "DB not connected" });
+  try {
+    const [rows] = await pool.query('SELECT SUM(count) as total FROM contributions');
+    res.json({ total: parseInt(rows[0]?.total || 0) });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('/api/descents/search', async (req, res) => {
   const query = req.query.q || '';
   if (!pool) return res.status(503).json({ error: "DB not connected" });
@@ -101,7 +96,6 @@ app.post('/api/descents', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Stats for specific family
 app.get('/api/stats/:familyId', async (req, res) => {
   const { familyId } = req.params;
   if (!pool) return res.status(503).json({ error: "Database not connected" });
@@ -151,5 +145,5 @@ app.use(express.static(distPath));
 app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[SERVER] 🚀 Family Collective Sync enabled at 0.0.0.0:${PORT}`);
+  console.log(`[SERVER] 🚀 Platform active at 0.0.0.0:${PORT}`);
 });

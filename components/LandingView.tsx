@@ -17,6 +17,27 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
   const [newLocation, setNewLocation] = useState('');
   const [newPassedDate, setNewPassedDate] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  
+  const [globalTotal, setGlobalTotal] = useState<number>(0);
+
+  // Get current dates
+  const now = new Date();
+  const gregorianDate = now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const hijriDate = new Intl.DateTimeFormat('en-u-ca-islamic-uma-nu-latn', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(now);
+
+  useEffect(() => {
+    const fetchGlobal = async () => {
+      const total = await apiService.fetchGlobalStats();
+      setGlobalTotal(total);
+    };
+    fetchGlobal();
+    const interval = setInterval(fetchGlobal, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -43,104 +64,87 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
     setIsCreating(false);
   };
 
+  const formattedGlobalTotal = globalTotal.toString().padStart(8, '0');
+
   return (
-    <div className="min-h-screen bg-cyan-50/20 flex flex-col items-center py-12 px-4 sm:px-8 animate-in fade-in duration-1000">
-      <div className="max-w-6xl w-full">
-        {/* Top Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl sm:text-7xl font-black cyan-theme serif-font mb-4">Esal-e-Sawab</h1>
-          <p className="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-[0.4em]">Spiritual Legacy • Collective Remembrance • Sadaqah Jariyah</p>
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center animate-in fade-in duration-1000">
+      
+      {/* Top Bar Navigation (Dark Theme) */}
+      <div className="w-full bg-[#4b5563] text-white py-2 px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between shadow-md z-50">
+        <div className="flex items-center gap-4 mb-2 md:mb-0">
+          <button className="hover:text-cyan-400 transition-colors"><i className="fas fa-user-circle text-lg"></i></button>
+          <span className="opacity-30">|</span>
+          <button className="hover:text-cyan-400 transition-colors"><i className="fas fa-search text-lg"></i></button>
+          <span className="opacity-30">|</span>
+          <button className="hover:text-cyan-400 transition-colors"><i className="fas fa-share-alt text-lg"></i></button>
+          <span className="opacity-30">|</span>
+          <button className="hover:text-cyan-400 transition-colors"><i className="fas fa-envelope text-lg"></i></button>
+        </div>
+        
+        <div className="arabic-text text-2xl sm:text-3xl font-bold tracking-widest drop-shadow-sm mb-2 md:mb-0">
+          بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-10 items-start">
-          
-          {/* Instructions Panel (Beautifully Styled Urdu Content) */}
-          <div className="w-full lg:w-1/2 order-2 lg:order-1" dir="rtl">
-            <div className="bg-white/80 backdrop-blur-sm border border-cyan-100 rounded-[2.5rem] p-8 sm:p-10 shadow-xl shadow-cyan-500/5 relative overflow-hidden h-full">
-              <div className="absolute top-0 right-0 p-8 opacity-5">
-                <i className="fas fa-quote-right text-6xl text-cyan-500"></i>
-              </div>
-              
-              <h2 className="serif-font text-3xl font-bold text-cyan-600 mb-8 border-b border-cyan-50 pb-4">
-                السلام علیکم،
-              </h2>
-              
-              <div className="serif-font text-lg text-slate-700 leading-relaxed space-y-6">
-                <p className="font-bold text-slate-800">
-                  براہِ کرم درج ذیل ہدایات پر عمل کرتے ہوئے اپنے مرحوم عزیز کے لیے حصہ لیں:
-                </p>
-                
-                <ul className="space-y-4 pr-2">
-                  <li className="flex gap-4">
-                    <span className="w-8 h-8 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-sm">۱</span>
-                    <p>اپنے فوت شدہ فیملی ممبر کا نام، تاریخِ وفات اور علاقہ لازمی درج کر کے ایڈ کریں۔</p>
-                  </li>
-                  <li className="flex gap-4">
-                    <span className="w-8 h-8 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-sm">۲</span>
-                    <p>جب فیملی تخلیق ہو جائے تو اس میں بیٹے، بیٹیاں، داماد، بہو، بھتیجے، بھتیجیاں، بھانجے، بھانجیاں اور دیگر متعلقہ افراد شامل ہو سکتے ہیں۔</p>
-                  </li>
-                  <li className="flex gap-4">
-                    <span className="w-8 h-8 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-sm">۳</span>
-                    <p>فیملی میں شامل ہونے کے لیے صرف اپنا نام درج کریں۔</p>
-                  </li>
-                  <li className="flex gap-4">
-                    <span className="w-8 h-8 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-sm">۴</span>
-                    <p>جیسے ہی آپ پہلی بار کوئی تلاوت / ذکر / درود شریف پوسٹ کریں گے، آپ کا نام خودکار طور پر اس فیملی میں محفوظ ہو جائے گا۔</p>
-                  </li>
-                  <li className="flex gap-4">
-                    <span className="w-8 h-8 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-sm">۵</span>
-                    <p>آئندہ تمام اجتماعی ایصالِ ثواب میں آپ کا نام خود بخود شامل ہوتا رہے گا۔</p>
-                  </li>
-                </ul>
+        <div className="flex items-center gap-3 text-[10px] sm:text-xs font-bold">
+           <i className="fas fa-sun text-cyan-400"></i>
+           <span className="tracking-wide">{hijriDate}</span>
+           <span className="opacity-30">|</span>
+           <span className="tracking-wide">{gregorianDate}</span>
+        </div>
+      </div>
 
-                <div className="pt-8 text-center">
-                  <p className="text-xl font-bold text-cyan-700 mb-2">
-                    اللہ تعالیٰ آپ کے مرحومین کی مغفرت فرمائے اور اس عمل کو صدقۂ جاریہ بنائے۔ آمین۔
-                  </p>
-                </div>
-
-                <div className="pt-6 border-t border-cyan-50 flex items-center gap-4">
-                   <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                      <i className="fas fa-signature text-xl"></i>
-                   </div>
-                   <div className="text-right">
-                      <p className="font-bold text-slate-800 text-xl leading-none mb-1">محمد فیصل</p>
-                      <p className="text-xs font-black uppercase tracking-widest text-cyan-500 opacity-70">Founder Esal-e-Sawab</p>
-                   </div>
-                </div>
-              </div>
-            </div>
+      <div className="max-w-6xl w-full px-4 pt-12 pb-20">
+        
+        {/* Salawat and Global Counter Section */}
+        <div className="text-center mb-16">
+          <div className="arabic-text text-xl sm:text-2xl text-slate-700 leading-loose mb-8 px-4 font-medium">
+            اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ، وَعَلَى آلِ مُحَمَّدٍ، كَمَا صَلَّيْتَ عَلَى إِبْرَاهِيمَ وَعَلَى آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ<br/>
+            اللَّهُمَّ بَارِكْ عَلَى مُحَمَّدٍ، وَعَلَى آلِ مُحَمَّدٍ، كَمَا بَارَكْتَ عَلَى إِبْرَاهِيمَ، وَعَلَى آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ
           </div>
 
+          <div className="flex flex-wrap justify-center items-center gap-1 sm:gap-2 mt-10">
+            {formattedGlobalTotal.split('').map((digit, idx) => (
+              <React.Fragment key={idx}>
+                <div className="relative w-10 sm:w-16 h-14 sm:h-24 bg-[#008080] rounded-lg shadow-lg flex items-center justify-center overflow-hidden border-b-4 border-black/20">
+                  {/* Flip center line */}
+                  <div className="absolute w-full h-[2px] bg-black/30 top-1/2 -translate-y-1/2 z-10"></div>
+                  <span className="text-3xl sm:text-6xl font-black text-white relative z-0">{digit}</span>
+                </div>
+                {(idx === 1 || idx === 4) && (
+                  <div className="self-end pb-2 sm:pb-4 text-3xl sm:text-5xl font-black text-[#008080]">,</div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-6">Total Global Recitations Contributed</p>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-10 items-stretch mb-20">
+          
           {/* Action Card (Search/Create) */}
-          <div className="w-full lg:w-1/2 order-1 lg:order-2">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-cyan-500/10 p-8 sm:p-12 border border-cyan-50 relative overflow-hidden h-full">
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-cyan-300 via-cyan-500 to-cyan-300"></div>
-              
+          <div className="w-full lg:w-1/2">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-cyan-500/5 p-8 sm:p-12 border border-slate-100 relative overflow-hidden h-full">
               {!showCreate ? (
                 <div className="space-y-8">
                   <div className="text-center">
-                    <div className="w-16 h-16 bg-cyan-50 rounded-2xl flex items-center justify-center text-cyan-500 mx-auto mb-4 shadow-inner">
-                      <i className="fas fa-moon text-2xl"></i>
-                    </div>
-                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-widest mb-2">Find a Family</h2>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Search for your family's collective tracker</p>
+                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-widest mb-2">Find a Family Tracker</h2>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Join your existing family circle</p>
                   </div>
 
                   <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-400">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-500">
                       <i className={`fas ${isSearching ? 'fa-spinner fa-spin' : 'fa-search'}`}></i>
                     </div>
                     <input 
                       type="text" 
-                      placeholder="Search by name or location..." 
+                      placeholder="Search name or location..." 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-12 pr-6 py-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:border-cyan-400 focus:bg-white transition-all text-sm font-bold text-slate-700 shadow-inner"
                     />
                     
                     {searchResults.length > 0 && (
-                      <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 max-h-60 overflow-y-auto no-scrollbar animate-in slide-in-from-top-2 duration-300">
+                      <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 max-h-60 overflow-y-auto no-scrollbar">
                         {searchResults.map((descent) => (
                           <button
                             key={descent.id}
@@ -161,12 +165,12 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                   </div>
 
                   <div className="pt-8 border-t border-slate-50 text-center">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] mb-6">Or Start New Circle</p>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] mb-6">Create New Circle</p>
                     <button 
                       onClick={() => setShowCreate(true)}
-                      className="w-full bg-cyan-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-cyan-500/20 hover:bg-cyan-600 transition-all uppercase text-[12px] tracking-widest flex items-center justify-center gap-3 active:scale-95"
+                      className="w-full bg-cyan-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-cyan-500/20 hover:bg-cyan-600 transition-all uppercase text-[11px] tracking-widest flex items-center justify-center gap-3"
                     >
-                      <i className="fas fa-plus-circle"></i> Create New Family Legacy
+                      <i className="fas fa-plus-circle"></i> Create Dedicated Family Legacy
                     </button>
                   </div>
                 </div>
@@ -175,62 +179,105 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                   <button 
                     type="button"
                     onClick={() => setShowCreate(false)}
-                    className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-cyan-500 flex items-center gap-2 transition-colors mb-4"
+                    className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-cyan-500 flex items-center gap-2 mb-4"
                   >
-                    <i className="fas fa-arrow-left-long"></i> Back to search
+                    <i className="fas fa-arrow-left"></i> Back to search
                   </button>
 
                   <div className="text-center mb-8">
-                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-widest mb-2">Create Legacy</h2>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Start a dedicated spiritual domain for your family</p>
+                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-widest">Setup Circle</h2>
                   </div>
 
                   <div className="space-y-5">
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Deceased Full Name</label>
-                      <input 
-                        type="text" 
-                        placeholder="Enter the name of the deceased..." 
-                        value={newName}
-                        required
-                        onChange={(e) => setNewName(e.target.value)}
-                        className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:border-cyan-400 transition-all text-sm font-bold text-slate-700 shadow-inner"
-                      />
+                      <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Deceased Name</label>
+                      <input type="text" placeholder="Full Name" value={newName} required onChange={(e) => setNewName(e.target.value)}
+                        className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:border-cyan-400 transition-all text-sm font-bold text-slate-700 shadow-inner" />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Location / Ancestral Area</label>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. Area, City" 
-                        value={newLocation}
-                        required
-                        onChange={(e) => setNewLocation(e.target.value)}
-                        className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:border-cyan-400 transition-all text-sm font-bold text-slate-700 shadow-inner"
-                      />
+                      <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">City / Location</label>
+                      <input type="text" placeholder="e.g. Islamabad, PK" value={newLocation} required onChange={(e) => setNewLocation(e.target.value)}
+                        className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:border-cyan-400 transition-all text-sm font-bold text-slate-700 shadow-inner" />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Date of Passing (For Anniversaries)</label>
-                      <input 
-                        type="date" 
-                        value={newPassedDate}
-                        onChange={(e) => setNewPassedDate(e.target.value)}
-                        className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:border-cyan-400 transition-all text-sm font-bold text-slate-700 shadow-inner"
-                      />
+                      <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Date of Passing</label>
+                      <input type="date" value={newPassedDate} onChange={(e) => setNewPassedDate(e.target.value)}
+                        className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:border-cyan-400 transition-all text-sm font-bold text-slate-700 shadow-inner" />
                     </div>
                   </div>
 
-                  <button 
-                    type="submit"
-                    disabled={isCreating}
-                    className="w-full bg-cyan-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-cyan-500/20 hover:bg-cyan-600 disabled:bg-slate-300 transition-all uppercase text-[12px] tracking-widest mt-8"
-                  >
-                    {isCreating ? 'Establishing Circle...' : 'Activate Family Tracker'}
+                  <button type="submit" disabled={isCreating} className="w-full bg-cyan-500 text-white font-black py-5 rounded-2xl shadow-xl hover:bg-cyan-600 transition-all uppercase text-[11px] tracking-widest mt-8">
+                    {isCreating ? 'Activating...' : 'Activate Family Domain'}
                   </button>
                 </form>
               )}
             </div>
           </div>
 
+          {/* Instructions Panel (Urdu) */}
+          <div className="w-full lg:w-1/2" dir="rtl">
+            <div className="bg-white/90 border border-cyan-100 rounded-[2.5rem] p-8 sm:p-10 shadow-xl relative overflow-hidden h-full">
+              <h2 className="serif-font text-2xl font-bold text-cyan-600 mb-6 border-b border-cyan-50 pb-4">رہنمائی برائے استعمال:</h2>
+              <div className="serif-font text-base text-slate-700 leading-loose space-y-4">
+                <p className="font-bold text-slate-800">ایصالِ ثواب کے اس عمل میں شامل ہونے کا طریقہ:</p>
+                <ul className="space-y-3 pr-2">
+                  <li className="flex gap-3 items-start">
+                    <span className="w-6 h-6 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-[10px]">۱</span>
+                    <p className="pt-0.5">اپنے مرحوم فیملی ممبر کا نام درج کر کے ان کا ایصالِ ثواب ٹریکر بنائیں۔</p>
+                  </li>
+                  <li className="flex gap-3 items-start">
+                    <span className="w-6 h-6 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-[10px]">۲</span>
+                    <p className="pt-0.5">اس کے بعد فیملی کے تمام افراد (بیٹے، بیٹیاں، رشتے دار) ایک ہی ٹریکر میں حصہ ڈال سکتے ہیں۔</p>
+                  </li>
+                  <li className="flex gap-3 items-start">
+                    <span className="w-6 h-6 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-[10px]">۳</span>
+                    <p className="pt-0.5">پہلی بار اپنا نام لکھ کر کوئی تلاوت یا ذکر شامل کریں، آپ کا نام فیملی لسٹ میں محفوظ ہو جائے گا۔</p>
+                  </li>
+                </ul>
+                <div className="pt-4 text-center">
+                  <p className="text-lg font-bold text-cyan-700 italic leading-relaxed">
+                    اللہ پاک آپ کی اس کوشش کو قبول فرمائے اور مرحومین کے درجات بلند کرے۔ آمین۔
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* New Quran & Sunnah Section */}
+        <div className="max-w-4xl mx-auto text-center" dir="rtl">
+          <div className="bg-white border border-slate-200 rounded-[3rem] p-10 sm:p-16 shadow-sm border-t-8 border-t-cyan-500">
+             <h2 className="serif-font text-3xl sm:text-4xl font-bold text-slate-800 mb-10">
+               دعا اور صدقۂ جاریہ کے ذریعے ثواب پہنچانا — قرآن و سنت کی روشنی میں
+             </h2>
+             
+             <div className="serif-font text-lg sm:text-xl text-slate-700 leading-relaxed space-y-10">
+                <p>ہم سب اپنے مرحومین اور تمام مومنین کے لیے مغفرت اور بلندیٔ درجات کی دعا کرتے ہیں۔ قرآنِ کریم ہمیں سکھاتا ہے:</p>
+                
+                <div className="bg-slate-50 p-6 rounded-2xl italic">
+                   <p className="text-2xl sm:text-3xl text-cyan-700 mb-4 font-bold">رَبَّنَا اغْفِرْ لَنَا وَلِإِخْوَانِنَا الَّذِينَ سَبَقُونَا بِالْإِيمَانِ</p>
+                   <p className="text-base text-slate-500">اے ہمارے رب! ہمیں بخش دے اور ہمارے اُن بھائیوں کو بھی جو ہم سے پہلے ایمان لائے۔</p>
+                </div>
+
+                <div className="bg-slate-50 p-6 rounded-2xl italic">
+                   <p className="text-2xl sm:text-3xl text-cyan-700 mb-4 font-bold">رَبِّ اغْفِرْ لِي وَلِوَالِدَيَّ وَلِلْمُؤْمِنِينَ</p>
+                   <p className="text-base text-slate-500">اے میرے رب! مجھے، میرے والدین کو اور تمام مومنوں کو بخش دے۔</p>
+                </div>
+
+                <p>اور ہم یہ جامع دعا بھی کرتے ہیں:</p>
+
+                <div className="bg-cyan-50 p-8 rounded-[2rem] border border-cyan-100">
+                   <p className="text-2xl sm:text-3xl text-cyan-800 mb-4 font-bold">اللهم اغفر للمؤمنين والمؤمنات والمسلمين والمسلمات الأحياء منهم والأموات</p>
+                   <p className="text-base text-cyan-700 font-medium">اے اللہ! تمام مومن مردوں اور عورتوں، زندہ اور وفات پا چکے سب کی مغفرت فرما۔</p>
+                </div>
+
+                <p className="font-bold text-slate-800 pt-6">
+                   ہم نیت کرتے ہیں کہ یہ دعا اور ہر نیک عمل کا ثواب حضرت آدم علیہ السلام سے لے کر قیامت تک آنے والے تمام مومنین و مومنات کو پہنچے۔
+                   اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔
+                </p>
+             </div>
+          </div>
         </div>
 
         {/* Global Footer Decoration */}

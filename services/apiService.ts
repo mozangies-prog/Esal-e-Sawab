@@ -5,6 +5,17 @@ import { Contribution, Descent } from "../types";
 const API_BASE = (process.env.VITE_API_URL || '').replace(/\/$/, '') || "/api";
 
 export const apiService = {
+  async fetchGlobalStats(): Promise<number> {
+    try {
+      const response = await fetch(`${API_BASE}/global-stats`);
+      if (!response.ok) return 0;
+      const data = await response.json();
+      return data.total || 0;
+    } catch (error) {
+      return 0;
+    }
+  },
+
   async searchDescents(query: string): Promise<Descent[]> {
     try {
       const response = await fetch(`${API_BASE}/descents/search?q=${encodeURIComponent(query)}`);
