@@ -119,12 +119,12 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
           <div className="flex flex-wrap justify-center items-center gap-1 sm:gap-2 mt-10">
             {formattedGlobalTotal.split('').map((digit, idx) => (
               <React.Fragment key={idx}>
-                <div className="relative w-10 sm:w-16 h-14 sm:h-24 bg-[#008080] rounded-lg shadow-lg flex items-center justify-center overflow-hidden border-b-4 border-black/20">
+                <div className="relative w-10 sm:w-16 h-14 sm:h-24 bg-cyan-500 rounded-lg shadow-lg flex items-center justify-center overflow-hidden border-b-4 border-black/20">
                   <div className="absolute w-full h-[2px] bg-black/30 top-1/2 -translate-y-1/2 z-10"></div>
                   <span className="text-3xl sm:text-6xl font-black text-white relative z-0">{digit}</span>
                 </div>
                 {(idx === 1 || idx === 4) && (
-                  <div className="self-end pb-2 sm:pb-4 text-3xl sm:text-5xl font-black text-[#008080]">,</div>
+                  <div className="self-end pb-2 sm:pb-4 text-3xl sm:text-5xl font-black text-cyan-500">,</div>
                 )}
               </React.Fragment>
             ))}
@@ -281,41 +281,15 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                 <p>اور ہم یہ جامع دعا بھی کرتے ہیں:</p>
 
                 <div className="bg-cyan-50 p-8 rounded-[2rem] border border-cyan-100">
-                   <p className="text-2xl sm:text-3xl text-cyan-800 mb-4 font-bold leading-relaxed">اللهم اغفر للمؤمنين والمؤمنات والمسلمين والمسلمات الأحياء منهم والأموات</p>
+                   <p className="text-2xl sm:text-3xl text-cyan-800 mb-4 font-bold leading-relaxed">اللَّهُمَّ اغْفِرْ لِلْمُسْلِمِينَ وَالْمُسْلِمَاتِ ، وَالْمُؤْمِنِينَ وَالْمُؤْمِنَاتِ ، الأَحْيَاءِ مِنْهُمْ وَالأَمْوَاتِ</p>
                    <p className="text-sm text-cyan-700 font-bold">اے اللہ! تمام مومن مردوں اور عورتوں، زندہ اور وفات پا چکے سب کی مغفرت فرما۔</p>
-                </div>
-
-                <div className="pt-8 space-y-4">
-                  <p className="font-bold text-slate-800 text-lg sm:text-xl">
-                    اس ایپ پر تمام اذکار و پڑھائی کا ثواب حضرت آدم (ع) سے قیامت تک کے انبیاء، صحابہ کرام، اولیاء، صالحین، علمائے دین اور تمام مومنین و مومنات کو پہنچے۔
-                  </p>
-                  <p className="font-bold text-cyan-700 text-lg sm:text-xl">
-                    اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔
-                  </p>
-                  <p className="font-bold text-slate-800 text-lg sm:text-xl">محمد فیصل</p>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Founder Esal-e-Sawab</p>
                 </div>
              </div>
           </div>
         </div>
 
-        {/* Footer Dedication */}
+        {/* Footer Dedication - Simplified for Landing as requested */}
         <footer className="mt-20 text-center px-4">
-          <div className="max-w-3xl mx-auto mb-10 arabic-text text-lg text-slate-600 leading-relaxed" dir="rtl">
-             <div className="space-y-6 flex flex-col items-center">
-               <p className="mb-4">
-                 اس ایپ پر تمام اذکار و پڑھائی کا ثواب حضرت آدم (ع) سے قیامت تک کے انبیاء، صحابہ کرام، اولیاء، صالحین، علمائے دین اور تمام مومنین و مومنات کو پہنچے۔
-               </p>
-               <p className="font-bold text-cyan-700">اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔</p>
-               
-               <div className="mt-8 flex flex-col items-center">
-                 <TasbeehLogo className="w-10 h-10 text-slate-300 mb-4 opacity-50" />
-                 <p className="font-bold text-slate-800 text-xl mb-1">محمد فیصل</p>
-                 <p className="text-xs font-black uppercase tracking-widest text-slate-400">Founder Esal-e-Sawab</p>
-               </div>
-             </div>
-          </div>
-
           <p className="text-[10px] uppercase font-black tracking-[0.8em] text-slate-300 mt-12">Privacy First • Community Driven • Eternal Rewards</p>
         </footer>
       </div>
