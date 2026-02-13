@@ -6,7 +6,7 @@ interface RecitationChartsProps {
   contributions: Contribution[];
 }
 
-type TabType = 'recent' | 'today' | 'monthly' | 'yearly';
+type TabType = 'recent' | 'today' | 'monthly' | 'yearly' | '5-years' | '10-years';
 
 const RecitationCharts: React.FC<RecitationChartsProps> = ({ contributions }) => {
   const [activeTab, setActiveTab] = React.useState<TabType>('recent');
@@ -16,7 +16,6 @@ const RecitationCharts: React.FC<RecitationChartsProps> = ({ contributions }) =>
     const data: ChartPoint[] = [];
 
     if (activeTab === 'today') {
-      // Last 24 hours in 3-hour chunks
       for (let i = 7; i >= 0; i--) {
         const d = new Date(now.getTime() - i * 3 * 3600000);
         const label = d.getHours() + ":00";
@@ -29,7 +28,6 @@ const RecitationCharts: React.FC<RecitationChartsProps> = ({ contributions }) =>
         data.push({ label, value: val });
       }
     } else if (activeTab === 'recent') {
-      // Last 7 days
       for (let i = 6; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
         const label = d.toLocaleDateString([], { weekday: 'short' });
@@ -42,7 +40,6 @@ const RecitationCharts: React.FC<RecitationChartsProps> = ({ contributions }) =>
         data.push({ label, value: val });
       }
     } else if (activeTab === 'monthly') {
-      // Last 30 days in 5-day chunks
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getTime() - i * 5 * 24 * 3600000);
         const label = d.toLocaleDateString([], { day: 'numeric', month: 'short' });
@@ -55,7 +52,6 @@ const RecitationCharts: React.FC<RecitationChartsProps> = ({ contributions }) =>
         data.push({ label, value: val });
       }
     } else if (activeTab === 'yearly') {
-      // 12 months
       for (let i = 11; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const label = d.toLocaleDateString([], { month: 'short' });
@@ -64,6 +60,24 @@ const RecitationCharts: React.FC<RecitationChartsProps> = ({ contributions }) =>
             const ct = new Date(c.timestamp);
             return ct.getMonth() === d.getMonth() && ct.getFullYear() === d.getFullYear();
           })
+          .reduce((acc, curr) => acc + curr.count, 0);
+        data.push({ label, value: val });
+      }
+    } else if (activeTab === '5-years') {
+      for (let i = 4; i >= 0; i--) {
+        const targetYear = now.getFullYear() - i;
+        const label = targetYear.toString();
+        const val = contributions
+          .filter(c => new Date(c.timestamp).getFullYear() === targetYear)
+          .reduce((acc, curr) => acc + curr.count, 0);
+        data.push({ label, value: val });
+      }
+    } else if (activeTab === '10-years') {
+      for (let i = 9; i >= 0; i--) {
+        const targetYear = now.getFullYear() - i;
+        const label = targetYear.toString().slice(-2);
+        const val = contributions
+          .filter(c => new Date(c.timestamp).getFullYear() === targetYear)
           .reduce((acc, curr) => acc + curr.count, 0);
         data.push({ label, value: val });
       }
@@ -86,7 +100,7 @@ const RecitationCharts: React.FC<RecitationChartsProps> = ({ contributions }) =>
         </div>
         
         <div className="flex bg-slate-100/50 rounded-xl p-1 border border-slate-200/50 w-full sm:w-auto overflow-x-auto no-scrollbar">
-          {(['recent', 'today', 'monthly', 'yearly'] as TabType[]).map((tab) => (
+          {(['recent', 'today', 'monthly', 'yearly', '5-years', '10-years'] as TabType[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -94,7 +108,7 @@ const RecitationCharts: React.FC<RecitationChartsProps> = ({ contributions }) =>
                 activeTab === tab ? 'bg-white text-cyan-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'
               }`}
             >
-              {tab}
+              {tab.replace('-', ' ')}
             </button>
           ))}
         </div>

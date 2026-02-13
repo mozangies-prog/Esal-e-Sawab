@@ -13,9 +13,17 @@ const USER_KEY = 'esal_user_name';
 const VIEW_KEY = 'esal_view_mode';
 
 const MEMORIAL_NAME = 'Chaudhary Liaqat Ali';
-const PASSED_DATE = '2023-02-11'; // Updated to Feb 11, 2023
+const PASSED_DATE = '2023-02-11'; 
 const POLLING_FAST = 5000;
 const POLLING_SLOW = 20000;
+
+const FAMILY_NAMES = [
+  "Mussarat Parveen", "Muhammad Faisal", "Rabia Liaqat", "Yasir Liaqat",
+  "Fatima Liaqat", "Madiha Liaqat", "Afshan Faisal", "Nageen Yasir",
+  "Saeed Latif", "Ahsan Ellahi", "Numaira Saeed", "Humna Saeed",
+  "Taha Saeed", "Haleema Fasial", "Ahmed Faisal", "Ibraheem Yasir",
+  "Mustafa Yasir", "Ali Yasir", "Abdul Hadi", "Anabia Yasir", "Abdullah Ahsan"
+];
 
 const App: React.FC = () => {
   const [localData, setLocalData] = useState<EsalData>(() => {
@@ -26,7 +34,7 @@ const App: React.FC = () => {
         return { 
           ...parsed, 
           deceasedName: MEMORIAL_NAME, 
-          passedDate: PASSED_DATE, // Force update the constant date
+          passedDate: PASSED_DATE,
           contributions: parsed.contributions || []
         };
       }
@@ -51,13 +59,10 @@ const App: React.FC = () => {
   const anniversaryInfo = useMemo(() => {
     const passed = new Date(localData.passedDate);
     const today = new Date();
-    // Normalize to compare only dates
     const currentToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const currentYear = today.getFullYear();
     
     let next = new Date(currentYear, passed.getMonth(), passed.getDate());
-    
-    // If anniversary already happened this year, look at next year
     if (next < currentToday) {
       next = new Date(currentYear + 1, passed.getMonth(), passed.getDate());
     }
@@ -71,20 +76,15 @@ const App: React.FC = () => {
 
   const syncWithServer = async () => {
     const statsResult = await apiService.getStats();
-    
     if (statsResult && statsResult.error) {
       setSyncStatus('unavailable');
       return;
     }
 
     const contribs = await apiService.getContributions();
-
     if (statsResult && !statsResult.error && contribs) {
       setGlobalStats(statsResult);
-      setLocalData(prev => ({ 
-        ...prev, 
-        contributions: contribs
-      }));
+      setLocalData(prev => ({ ...prev, contributions: contribs }));
       setSyncStatus('collective');
     } else {
       if (syncStatus !== 'unavailable' && syncStatus !== 'personal') {
@@ -99,16 +99,12 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [isCollective]);
 
-  useEffect(() => {
-    localStorage.setItem(USER_KEY, userName);
-  }, [userName]);
-
-  useEffect(() => {
-    localStorage.setItem(VIEW_KEY, viewMode);
-  }, [viewMode]);
+  useEffect(() => { localStorage.setItem(USER_KEY, userName); }, [userName]);
+  useEffect(() => { localStorage.setItem(VIEW_KEY, viewMode); }, [viewMode]);
 
   const handleAdd = async (type: RecitationType, count: number) => {
-    if (!userName.trim()) {
+    const trimmedName = userName.trim();
+    if (!trimmedName) {
       alert("Please enter your name first.");
       document.getElementById('user-name-input')?.focus();
       return;
@@ -116,7 +112,7 @@ const App: React.FC = () => {
 
     const newContrib = {
       id: crypto.randomUUID(),
-      contributorName: userName,
+      contributorName: trimmedName,
       recitationType: type,
       count: count,
       timestamp: Date.now()
@@ -135,7 +131,6 @@ const App: React.FC = () => {
     if (Math.random() > 0.7) {
       getSpiritualInsight(type).then(setAiInsight);
     }
-
     setTimeout(() => setLastAddedId(null), 2000);
   };
 
@@ -158,7 +153,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-12 px-3 sm:px-6 lg:px-8 pt-4 max-w-[1600px] mx-auto transition-all">
-      {/* Connection Alert Banner */}
+      {/* Sync Banner */}
       {syncStatus === 'unavailable' && (
         <div className="mb-4 bg-slate-800 text-white rounded-xl p-3 shadow-lg border-b-2 border-slate-900">
           <div className="flex items-center gap-2">
@@ -195,7 +190,6 @@ const App: React.FC = () => {
             </p>
           </div>
         </div>
-
         <div className="flex flex-wrap justify-center gap-3">
           <div className="bg-white rounded-xl shadow-sm border border-cyan-50 p-2.5 px-5 flex flex-col items-center min-w-[140px]">
             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Done</span>
@@ -208,7 +202,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Anniversary Reminder Section - Positioned at the top as per "under name" request */}
+      {/* Anniversary Reminder */}
       <div className={`mb-8 p-6 rounded-3xl border transition-all duration-700 ${anniversaryInfo.isToday ? 'bg-cyan-500 border-cyan-400 shadow-xl shadow-cyan-500/20' : 'bg-white border-cyan-50 shadow-sm'}`}>
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-5">
@@ -250,21 +244,20 @@ const App: React.FC = () => {
             <input
               id="user-name-input"
               type="text"
+              list="family-names"
               placeholder="Who is contributing?..."
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               className="w-full bg-transparent border-b border-slate-100 py-1 outline-none text-slate-700 font-bold text-sm focus:border-cyan-400"
             />
+            <datalist id="family-names">
+              {FAMILY_NAMES.map(name => <option key={name} value={name} />)}
+            </datalist>
           </div>
         </div>
-
         <div className="flex bg-slate-100/50 rounded-xl p-1 border border-slate-200/50 w-full md:w-auto">
-          <button onClick={() => setViewMode('grid')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'grid' ? 'bg-white text-cyan-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
-             Grid
-          </button>
-          <button onClick={() => setViewMode('list')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-white text-cyan-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
-             List
-          </button>
+          <button onClick={() => setViewMode('grid')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'grid' ? 'bg-white text-cyan-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>Grid</button>
+          <button onClick={() => setViewMode('list')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-white text-cyan-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>List</button>
         </div>
       </div>
 
@@ -285,7 +278,6 @@ const App: React.FC = () => {
             </span>
           </div>
         </div>
-        
         <div className="max-h-[350px] overflow-y-auto pr-2 custom-scrollbar no-scrollbar">
           {localData.contributions.length === 0 ? (
             <div className="text-center py-12 opacity-30">
@@ -307,7 +299,9 @@ const App: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-cyan-500 font-black text-sm sm:text-base">+{c.count.toLocaleString()}</p>
-                    <p className="text-[9px] text-slate-300 font-bold uppercase">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    <p className="text-[9px] text-slate-300 font-bold uppercase whitespace-nowrap">
+                      {new Date(c.timestamp).toLocaleDateString([], { day: '2-digit', month: 'short' })} • {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -316,7 +310,6 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Recitation Analytics moved to bottom part as requested */}
       <RecitationCharts contributions={localData.contributions} />
 
       <footer className="text-center py-10 mt-10 border-t border-slate-100">
