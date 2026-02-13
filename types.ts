@@ -6,7 +6,13 @@ export enum RecitationType {
   KALMA_2 = '2nd Kalma (Shahadat)',
   KALMA_3 = '3rd Kalma (Tamjeed)',
   AYAT_UL_KURSI = 'Ayat-ul-Kursi',
-  DUROOD = 'Durood Shareef'
+  DUROOD = 'Durood Shareef',
+  YASIN = 'Surah Yasin',
+  MULK = 'Surah Al-Mulk',
+  LA_ILAHA_ILLALLAH = 'La ilaha illallah',
+  SUBHANALLAH = 'SubhanAllah',
+  ALHAMDULILLAH = 'Alhamdulillah',
+  ALLAHU_AKBAR = 'Allahu Akbar'
 }
 
 export interface RecitationInfo {
@@ -24,14 +30,16 @@ export interface Contribution {
   timestamp: number;
 }
 
+/**
+ * Fix: Interface representing a recitation goal, required by GoalTracker
+ */
+export interface Goal {
+  recitationType: RecitationType;
+  target: number;
+}
+
 export interface EsalData {
   deceasedName: string;
   passedDate: string;
   contributions: Contribution[];
-}
-
-// Added Goal interface to support GoalTracker component
-export interface Goal {
-  recitationType: RecitationType;
-  target: number;
 }

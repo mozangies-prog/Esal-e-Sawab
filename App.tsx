@@ -210,8 +210,8 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Cards */}
-      <div className={`grid gap-3 mb-10 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7' : 'grid-cols-1'}`}>
+      {/* Cards - Responsive Grid for many cards */}
+      <div className={`grid gap-3 mb-10 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' : 'grid-cols-1'}`}>
         {RECITATIONS.map((rec) => (
           <RecitationCard key={rec.id} info={rec} totalCount={totals[rec.id] || 0} onAdd={(count) => handleAdd(rec.id, count)} isListView={viewMode === 'list'} />
         ))}
