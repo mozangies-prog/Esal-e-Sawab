@@ -31,8 +31,9 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
     year: 'numeric' 
   });
 
-  // Islamic date (Hijri) as per Pakistani calendar typically uses Islamic-civil or UMA
-  // We use the Intl formatter with the 'islamic-uma' calendar
+  // Islamic date (Hijri) as per Pakistani calendar style
+  // Using islamic-umalqura or islamic-civil to approximate. 
+  // We'll use islamic-uma and adjust if needed, but Intl is generally precise.
   const hijriDate = new Intl.DateTimeFormat('en-u-ca-islamic-uma-nu-latn', {
     day: 'numeric',
     month: 'long',
@@ -91,15 +92,15 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
           <button className="hover:text-cyan-400 transition-colors"><i className="fas fa-envelope text-lg"></i></button>
         </div>
         
-        {/* Centered Bismillah Calligraphy */}
-        <div className="arabic-text text-3xl sm:text-4xl font-normal drop-shadow-sm mb-2 md:mb-0 py-1" style={{ lineHeight: '1.4' }}>
+        {/* Centered Bismillah Calligraphy - Updated Font Style */}
+        <div className="arabic-text text-3xl sm:text-4xl font-normal drop-shadow-sm mb-2 md:mb-0" style={{ lineHeight: '1.2' }}>
           بِسْمِ اللہِ الرَّحْمٰنِ الرَّحِیْمِ
         </div>
 
-        {/* Corrected Single Date Display */}
-        <div className="flex items-center gap-3 text-[10px] sm:text-xs font-bold">
+        {/* Date Display - Duplicate removed, icon removed, spacing fixed */}
+        <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold text-slate-200">
            <span className="tracking-wide">{hijriDate}</span>
-           <span className="opacity-30">|</span>
+           <span className="opacity-40">|</span>
            <span className="tracking-wide">{gregorianDate}</span>
         </div>
       </div>
@@ -108,7 +109,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
         
         {/* Salawat and Global Counter Section */}
         <div className="text-center mb-16">
-          <div className="arabic-text text-2xl sm:text-3xl text-slate-700 leading-relaxed mb-8 px-4 font-normal">
+          <div className="arabic-text text-3xl sm:text-4xl text-slate-700 leading-relaxed mb-8 px-4 font-normal">
             اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ، وَعَلَى آلِ مُحَمَّدٍ، كَمَا صَلَّيْتَ عَلَى إِبْرَاهِيمَ وَعَلَى آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ<br/>
             اللَّهُمَّ بَارِكْ عَلَى مُحَمَّدٍ، وَعَلَى آلِ مُحَمَّدٍ، كَمَا بَارَكْتَ عَلَى إِبْرَاهِيمَ، وَعَلَى آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ
           </div>
@@ -228,25 +229,25 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
           {/* Instructions Panel (Urdu) */}
           <div className="w-full lg:w-1/2" dir="rtl">
             <div className="bg-white/90 border border-cyan-100 rounded-[2.5rem] p-8 sm:p-10 shadow-xl relative overflow-hidden h-full">
-              <h2 className="arabic-text text-3xl font-bold text-cyan-600 mb-6 border-b border-cyan-50 pb-4">رہنمائی برائے استعمال:</h2>
-              <div className="arabic-text text-xl text-slate-700 leading-relaxed space-y-4">
+              <h2 className="arabic-text text-4xl font-bold text-cyan-600 mb-6 border-b border-cyan-50 pb-4">رہنمائی برائے استعمال:</h2>
+              <div className="arabic-text text-2xl text-slate-700 leading-relaxed space-y-4">
                 <p className="font-bold text-slate-800">ایصالِ ثواب کے اس عمل میں شامل ہونے کا طریقہ:</p>
-                <ul className="space-y-3 pr-2">
-                  <li className="flex gap-3 items-start">
-                    <span className="w-8 h-8 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-sm">۱</span>
+                <ul className="space-y-4 pr-2">
+                  <li className="flex gap-4 items-start">
+                    <span className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-lg">۱</span>
                     <p className="pt-1">اپنے مرحوم فیملی ممبر کا نام درج کر کے ان کا ایصالِ ثواب ٹریکر بنائیں۔</p>
                   </li>
-                  <li className="flex gap-3 items-start">
-                    <span className="w-8 h-8 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-sm">۲</span>
+                  <li className="flex gap-4 items-start">
+                    <span className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-lg">۲</span>
                     <p className="pt-1">اس کے بعد فیملی کے تمام افراد (بیٹے، بیٹیاں، رشتے دار) ایک ہی ٹریکر میں حصہ ڈال سکتے ہیں۔</p>
                   </li>
-                  <li className="flex gap-3 items-start">
-                    <span className="w-8 h-8 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-sm">۳</span>
+                  <li className="flex gap-4 items-start">
+                    <span className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-lg">۳</span>
                     <p className="pt-1">پہلی بار اپنا نام لکھ کر کوئی تلاوت یا ذکر شامل کریں، آپ کا نام فیملی لسٹ میں محفوظ ہو جائے گا۔</p>
                   </li>
                 </ul>
-                <div className="pt-4 text-center">
-                  <p className="text-2xl font-bold text-cyan-700 italic leading-relaxed">
+                <div className="pt-6 text-center">
+                  <p className="text-3xl font-bold text-cyan-700 italic leading-relaxed">
                     اللہ پاک آپ کی اس کوشش کو قبول فرمائے اور مرحومین کے درجات بلند کرے۔ آمین۔
                   </p>
                 </div>
@@ -259,31 +260,31 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
         {/* New Quran & Sunnah Section */}
         <div className="max-w-4xl mx-auto text-center" dir="rtl">
           <div className="bg-white border border-slate-200 rounded-[3rem] p-10 sm:p-16 shadow-sm border-t-8 border-t-cyan-500">
-             <h2 className="arabic-text text-4xl font-bold text-slate-800 mb-10 leading-snug">
+             <h2 className="arabic-text text-4xl sm:text-5xl font-bold text-slate-800 mb-10 leading-snug">
                دعا اور صدقۂ جاریہ کے ذریعے ثواب پہنچانا — قرآن و سنت کی روشنی میں
              </h2>
              
-             <div className="arabic-text text-2xl text-slate-700 leading-relaxed space-y-12">
+             <div className="arabic-text text-2xl sm:text-3xl text-slate-700 leading-relaxed space-y-12">
                 <p>ہم سب اپنے مرحومین اور تمام مومنین کے لیے مغفرت اور بلندیٔ درجات کی دعا کرتے ہیں۔ قرآنِ کریم ہمیں سکھاتا ہے:</p>
                 
-                <div className="bg-slate-50 p-8 rounded-2xl">
-                   <p className="text-3xl sm:text-4xl text-cyan-700 mb-6 font-bold leading-relaxed">رَبَّنَا اغْفِرْ لَنَا وَلِإِخْوَانِنَا الَّذِينَ سَبَقُونَا بِالْإِيمَانِ</p>
-                   <p className="text-lg text-slate-500 font-medium">اے ہمارے رب! ہمیں بخش دے اور ہمارے اُن بھائیوں کو بھی جو ہم سے پہلے ایمان لائے۔</p>
+                <div className="bg-slate-50 p-10 rounded-3xl">
+                   <p className="text-4xl sm:text-5xl text-cyan-700 mb-6 font-bold leading-relaxed">رَبَّنَا اغْفِرْ لَنَا وَلِإِخْوَانِنَا الَّذِينَ سَبَقُونَا بِالْإِيمَانِ</p>
+                   <p className="text-xl text-slate-500 font-medium">اے ہمارے رب! ہمیں بخش دے اور ہمارے اُن بھائیوں کو بھی جو ہم سے پہلے ایمان لائے۔</p>
                 </div>
 
-                <div className="bg-slate-50 p-8 rounded-2xl">
-                   <p className="text-3xl sm:text-4xl text-cyan-700 mb-6 font-bold leading-relaxed">رَبِّ اغْفِرْ لِي وَلِوَالِدَيَّ وَلِلْمُؤْمِنِينَ</p>
-                   <p className="text-lg text-slate-500 font-medium">اے میرے رب! مجھے، میرے والدین کو اور تمام مومنوں کو بخش دے۔</p>
+                <div className="bg-slate-50 p-10 rounded-3xl">
+                   <p className="text-4xl sm:text-5xl text-cyan-700 mb-6 font-bold leading-relaxed">رَبِّ اغْفِرْ لِي وَلِوَالِدَيَّ وَلِلْمُؤْمِنِينَ</p>
+                   <p className="text-xl text-slate-500 font-medium">اے میرے رب! مجھے، میرے والدین کو اور تمام مومنوں کو بخش دے۔</p>
                 </div>
 
                 <p>اور ہم یہ جامع دعا بھی کرتے ہیں:</p>
 
-                <div className="bg-cyan-50 p-10 rounded-[2rem] border border-cyan-100">
-                   <p className="text-3xl sm:text-4xl text-cyan-800 mb-6 font-bold leading-relaxed">اللهم اغفر للمؤمنين والمؤمنات والمسلمين والمسلمات الأحياء منهم والأموات</p>
-                   <p className="text-lg text-cyan-700 font-bold">اے اللہ! تمام مومن مردوں اور عورتوں، زندہ اور وفات پا چکے سب کی مغفرت فرما۔</p>
+                <div className="bg-cyan-50 p-12 rounded-[2.5rem] border border-cyan-100">
+                   <p className="text-4xl sm:text-5xl text-cyan-800 mb-6 font-bold leading-relaxed">اللهم اغفر للمؤمنين والمؤمنات والمسلمين والمسلمات الأحياء منهم والأموات</p>
+                   <p className="text-xl text-cyan-700 font-bold">اے اللہ! تمام مومن مردوں اور عورتوں، زندہ اور وفات پا چکے سب کی مغفرت فرما۔</p>
                 </div>
 
-                <p className="font-bold text-slate-800 pt-10 text-2xl">
+                <p className="font-bold text-slate-800 pt-10 text-3xl">
                    ہم نیت کرتے ہیں کہ یہ دعا اور ہر نیک عمل کا ثواب حضرت آدم علیہ السلام سے لے کر قیامت تک آنے والے تمام مومنین و مومنات کو پہنچے۔
                    اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔
                 </p>
