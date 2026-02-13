@@ -1,5 +1,5 @@
 
-import React, { ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode, Component } from 'react';
 
 interface Props {
   children?: ReactNode;
@@ -12,16 +12,25 @@ interface State {
 
 /**
  * ErrorBoundary class component to catch and handle rendering errors in its child components.
- * Extends React.Component with Props and State to ensure proper inheritance of built-in properties.
+ * Extends Component with Props and State to ensure proper inheritance of built-in properties.
  */
-class ErrorBoundary extends React.Component<Props, State> {
-  // Fix: Use constructor to properly initialize state and ensure props are recognized by the compiler
+class ErrorBoundary extends Component<Props, State> {
+  // Fix: Explicitly declare the state property to ensure it's recognized by the TypeScript compiler.
+  // In some environments, inherited properties from generic classes may not be correctly inferred without explicit declaration.
+  public state: State;
+  
+  // Fix: Explicitly declare the props property to resolve "Property 'props' does not exist on type 'ErrorBoundary'" error.
+  public props: Props;
+
   constructor(props: Props) {
     super(props);
+    // Fix: Initialize state within the constructor as per standard React class component patterns.
     this.state = {
       hasError: false,
       error: null,
     };
+    // Fix: Initialize the local props property to ensure the compiler recognizes it on 'this'.
+    this.props = props;
   }
 
   /**
@@ -41,7 +50,7 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   // Render method returns the fallback UI if an error occurred, otherwise the children
   public render(): ReactNode {
-    // Fix: Access state members now recognized by the compiler
+    // Fix: Access state members now recognized by the compiler thanks to explicit declaration.
     if (this.state.hasError) {
       // Fallback UI when an error occurs
       return (
@@ -70,7 +79,8 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // Fix: Access props inherited from the React.Component base class
+    // Fix: Access props inherited from the Component base class.
+    // Using named 'Component' import from 'react' helps ensure that props/state inheritance is correctly processed by the TS compiler.
     return this.props.children;
   }
 }

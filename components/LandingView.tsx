@@ -20,26 +20,6 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
   
   const [globalTotal, setGlobalTotal] = useState<number>(0);
 
-  // Get current dates formatted specifically for the region
-  const now = new Date();
-  
-  // Format Gregorian date as "Fri, 13 Feb, 2026"
-  const gregorianDate = now.toLocaleDateString('en-GB', { 
-    weekday: 'short', 
-    day: 'numeric', 
-    month: 'short', 
-    year: 'numeric' 
-  });
-
-  // Islamic date (Hijri) as per Pakistani calendar style
-  // Using islamic-umalqura or islamic-civil to approximate. 
-  // We'll use islamic-uma and adjust if needed, but Intl is generally precise.
-  const hijriDate = new Intl.DateTimeFormat('en-u-ca-islamic-uma-nu-latn', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  }).format(now);
-
   useEffect(() => {
     const fetchGlobal = async () => {
       const total = await apiService.fetchGlobalStats();
@@ -80,36 +60,33 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center animate-in fade-in duration-1000">
       
-      {/* Top Bar Navigation (Dark Theme) */}
-      <div className="w-full bg-[#4b5563] text-white py-2 px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between shadow-md z-50">
+      {/* Top Bar Navigation (Dark Theme) - Icons and Date Removed */}
+      <div className="w-full bg-[#4b5563] text-white py-4 px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between shadow-md z-50">
         <div className="flex items-center gap-4 mb-2 md:mb-0">
-          <button className="hover:text-cyan-400 transition-colors"><i className="fas fa-user-circle text-lg"></i></button>
-          <span className="opacity-30">|</span>
-          <button className="hover:text-cyan-400 transition-colors"><i className="fas fa-search text-lg"></i></button>
-          <span className="opacity-30">|</span>
-          <button className="hover:text-cyan-400 transition-colors"><i className="fas fa-share-alt text-lg"></i></button>
-          <span className="opacity-30">|</span>
-          <button className="hover:text-cyan-400 transition-colors"><i className="fas fa-envelope text-lg"></i></button>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-black uppercase tracking-tighter text-cyan-400">Esal-e-Sawab</span>
+          </div>
         </div>
         
-        {/* Centered Bismillah Calligraphy - Updated Font Style */}
-        <div className="arabic-text text-3xl sm:text-4xl font-normal drop-shadow-sm mb-2 md:mb-0" style={{ lineHeight: '1.2' }}>
+        {/* Centered Bismillah - Elegant Size */}
+        <div className="arabic-text text-xl sm:text-2xl font-normal drop-shadow-sm" style={{ lineHeight: '1.2' }}>
           بِسْمِ اللہِ الرَّحْمٰنِ الرَّحِیْمِ
         </div>
 
-        {/* Date Display - Duplicate removed, icon removed, spacing fixed */}
-        <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold text-slate-200">
-           <span className="tracking-wide">{hijriDate}</span>
-           <span className="opacity-40">|</span>
-           <span className="tracking-wide">{gregorianDate}</span>
-        </div>
+        <div className="hidden md:block w-32"></div> {/* Spacer to maintain balance */}
       </div>
 
       <div className="max-w-6xl w-full px-4 pt-12 pb-20">
         
-        {/* Salawat and Global Counter Section */}
+        {/* Branding Title Updated */}
+        <div className="text-center mb-8">
+           <h1 className="text-3xl sm:text-5xl font-black text-slate-800 uppercase tracking-tighter mb-2">Esal-e-Sawab – Connect, Pray, Remember</h1>
+           <p className="text-[10px] font-black text-cyan-500 uppercase tracking-[0.5em]">Digital Spiritual Legacy</p>
+        </div>
+
+        {/* Salawat - Reduced Font Size for better aesthetics */}
         <div className="text-center mb-16">
-          <div className="arabic-text text-3xl sm:text-4xl text-slate-700 leading-relaxed mb-8 px-4 font-normal">
+          <div className="arabic-text text-lg sm:text-xl text-slate-700 leading-relaxed mb-8 px-4 font-normal max-w-4xl mx-auto">
             اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ، وَعَلَى آلِ مُحَمَّدٍ، كَمَا صَلَّيْتَ عَلَى إِبْرَاهِيمَ وَعَلَى آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ<br/>
             اللَّهُمَّ بَارِكْ عَلَى مُحَمَّدٍ، وَعَلَى آلِ مُحَمَّدٍ، كَمَا بَارَكْتَ عَلَى إِبْرَاهِيمَ، وَعَلَى آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ
           </div>
@@ -118,7 +95,6 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
             {formattedGlobalTotal.split('').map((digit, idx) => (
               <React.Fragment key={idx}>
                 <div className="relative w-10 sm:w-16 h-14 sm:h-24 bg-[#008080] rounded-lg shadow-lg flex items-center justify-center overflow-hidden border-b-4 border-black/20">
-                  {/* Flip center line */}
                   <div className="absolute w-full h-[2px] bg-black/30 top-1/2 -translate-y-1/2 z-10"></div>
                   <span className="text-3xl sm:text-6xl font-black text-white relative z-0">{digit}</span>
                 </div>
@@ -139,8 +115,8 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
               {!showCreate ? (
                 <div className="space-y-8">
                   <div className="text-center">
-                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-widest mb-2">Find a Family Tracker</h2>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Join your existing family circle</p>
+                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-widest mb-2">Find a Family Circle</h2>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Join your existing family legacy</p>
                   </div>
 
                   <div className="relative">
@@ -182,7 +158,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                       onClick={() => setShowCreate(true)}
                       className="w-full bg-cyan-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-cyan-500/20 hover:bg-cyan-600 transition-all uppercase text-[11px] tracking-widest flex items-center justify-center gap-3"
                     >
-                      <i className="fas fa-plus-circle"></i> Create Dedicated Family Legacy
+                      <i className="fas fa-plus-circle"></i> Setup Family Legacy Page
                     </button>
                   </div>
                 </div>
@@ -197,7 +173,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                   </button>
 
                   <div className="text-center mb-8">
-                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-widest">Setup Circle</h2>
+                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-widest">Setup Legacy Page</h2>
                   </div>
 
                   <div className="space-y-5">
@@ -219,35 +195,35 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                   </div>
 
                   <button type="submit" disabled={isCreating} className="w-full bg-cyan-500 text-white font-black py-5 rounded-2xl shadow-xl hover:bg-cyan-600 transition-all uppercase text-[11px] tracking-widest mt-8">
-                    {isCreating ? 'Activating...' : 'Activate Family Domain'}
+                    {isCreating ? 'Creating...' : 'Activate Legacy Domain'}
                   </button>
                 </form>
               )}
             </div>
           </div>
 
-          {/* Instructions Panel (Urdu) */}
+          {/* Instructions Panel - Elegant Typography */}
           <div className="w-full lg:w-1/2" dir="rtl">
             <div className="bg-white/90 border border-cyan-100 rounded-[2.5rem] p-8 sm:p-10 shadow-xl relative overflow-hidden h-full">
-              <h2 className="arabic-text text-4xl font-bold text-cyan-600 mb-6 border-b border-cyan-50 pb-4">رہنمائی برائے استعمال:</h2>
-              <div className="arabic-text text-2xl text-slate-700 leading-relaxed space-y-4">
+              <h2 className="arabic-text text-2xl font-bold text-cyan-600 mb-6 border-b border-cyan-50 pb-4">رہنمائی برائے استعمال:</h2>
+              <div className="arabic-text text-lg text-slate-700 leading-relaxed space-y-4">
                 <p className="font-bold text-slate-800">ایصالِ ثواب کے اس عمل میں شامل ہونے کا طریقہ:</p>
                 <ul className="space-y-4 pr-2">
                   <li className="flex gap-4 items-start">
-                    <span className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-lg">۱</span>
+                    <span className="w-8 h-8 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-sm">۱</span>
                     <p className="pt-1">اپنے مرحوم فیملی ممبر کا نام درج کر کے ان کا ایصالِ ثواب ٹریکر بنائیں۔</p>
                   </li>
                   <li className="flex gap-4 items-start">
-                    <span className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-lg">۲</span>
+                    <span className="w-8 h-8 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-sm">۲</span>
                     <p className="pt-1">اس کے بعد فیملی کے تمام افراد (بیٹے، بیٹیاں، رشتے دار) ایک ہی ٹریکر میں حصہ ڈال سکتے ہیں۔</p>
                   </li>
                   <li className="flex gap-4 items-start">
-                    <span className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-lg">۳</span>
+                    <span className="w-8 h-8 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center shrink-0 font-bold text-sm">۳</span>
                     <p className="pt-1">پہلی بار اپنا نام لکھ کر کوئی تلاوت یا ذکر شامل کریں، آپ کا نام فیملی لسٹ میں محفوظ ہو جائے گا۔</p>
                   </li>
                 </ul>
                 <div className="pt-6 text-center">
-                  <p className="text-3xl font-bold text-cyan-700 italic leading-relaxed">
+                  <p className="text-xl font-bold text-cyan-700 italic leading-relaxed">
                     اللہ پاک آپ کی اس کوشش کو قبول فرمائے اور مرحومین کے درجات بلند کرے۔ آمین۔
                   </p>
                 </div>
@@ -257,34 +233,34 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
 
         </div>
 
-        {/* New Quran & Sunnah Section */}
+        {/* Quran & Sunnah Section - Balanced Font Sizes */}
         <div className="max-w-4xl mx-auto text-center" dir="rtl">
           <div className="bg-white border border-slate-200 rounded-[3rem] p-10 sm:p-16 shadow-sm border-t-8 border-t-cyan-500">
-             <h2 className="arabic-text text-4xl sm:text-5xl font-bold text-slate-800 mb-10 leading-snug">
+             <h2 className="arabic-text text-2xl sm:text-3xl font-bold text-slate-800 mb-10 leading-snug">
                دعا اور صدقۂ جاریہ کے ذریعے ثواب پہنچانا — قرآن و سنت کی روشنی میں
              </h2>
              
-             <div className="arabic-text text-2xl sm:text-3xl text-slate-700 leading-relaxed space-y-12">
+             <div className="arabic-text text-lg sm:text-xl text-slate-700 leading-relaxed space-y-8">
                 <p>ہم سب اپنے مرحومین اور تمام مومنین کے لیے مغفرت اور بلندیٔ درجات کی دعا کرتے ہیں۔ قرآنِ کریم ہمیں سکھاتا ہے:</p>
                 
-                <div className="bg-slate-50 p-10 rounded-3xl">
-                   <p className="text-4xl sm:text-5xl text-cyan-700 mb-6 font-bold leading-relaxed">رَبَّنَا اغْفِرْ لَنَا وَلِإِخْوَانِنَا الَّذِينَ سَبَقُونَا بِالْإِيمَانِ</p>
-                   <p className="text-xl text-slate-500 font-medium">اے ہمارے رب! ہمیں بخش دے اور ہمارے اُن بھائیوں کو بھی جو ہم سے پہلے ایمان لائے۔</p>
+                <div className="bg-slate-50 p-8 rounded-2xl">
+                   <p className="text-2xl sm:text-3xl text-cyan-700 mb-4 font-bold leading-relaxed">رَبَّنَا اغْفِرْ لَنَا وَلِإِخْوَانِنَا الَّذِينَ سَبَقُونَا بِالْإِيمَانِ</p>
+                   <p className="text-sm text-slate-500 font-medium">اے ہمارے رب! ہمیں بخش دے اور ہمارے اُن بھائیوں کو بھی جو ہم سے پہلے ایمان لائے۔</p>
                 </div>
 
-                <div className="bg-slate-50 p-10 rounded-3xl">
-                   <p className="text-4xl sm:text-5xl text-cyan-700 mb-6 font-bold leading-relaxed">رَبِّ اغْفِرْ لِي وَلِوَالِدَيَّ وَلِلْمُؤْمِنِينَ</p>
-                   <p className="text-xl text-slate-500 font-medium">اے میرے رب! مجھے، میرے والدین کو اور تمام مومنوں کو بخش دے۔</p>
+                <div className="bg-slate-50 p-8 rounded-2xl">
+                   <p className="text-2xl sm:text-3xl text-cyan-700 mb-4 font-bold leading-relaxed">رَبِّ اغْفِرْ لِي وَلِوَالِدَيَّ وَلِلْمُؤْمِنِينَ</p>
+                   <p className="text-sm text-slate-500 font-medium">اے میرے رب! مجھے، میرے والدین کو اور تمام مومنوں کو بخش دے۔</p>
                 </div>
 
                 <p>اور ہم یہ جامع دعا بھی کرتے ہیں:</p>
 
-                <div className="bg-cyan-50 p-12 rounded-[2.5rem] border border-cyan-100">
-                   <p className="text-4xl sm:text-5xl text-cyan-800 mb-6 font-bold leading-relaxed">اللهم اغفر للمؤمنين والمؤمنات والمسلمين والمسلمات الأحياء منهم والأموات</p>
-                   <p className="text-xl text-cyan-700 font-bold">اے اللہ! تمام مومن مردوں اور عورتوں، زندہ اور وفات پا چکے سب کی مغفرت فرما۔</p>
+                <div className="bg-cyan-50 p-8 rounded-[2rem] border border-cyan-100">
+                   <p className="text-2xl sm:text-3xl text-cyan-800 mb-4 font-bold leading-relaxed">اللهم اغفر للمؤمنين والمؤمنات والمسلمين والمسلمات الأحياء منهم والأموات</p>
+                   <p className="text-sm text-cyan-700 font-bold">اے اللہ! تمام مومن مردوں اور عورتوں، زندہ اور وفات پا چکے سب کی مغفرت فرما۔</p>
                 </div>
 
-                <p className="font-bold text-slate-800 pt-10 text-3xl">
+                <p className="font-bold text-slate-800 pt-8 text-lg sm:text-xl">
                    ہم نیت کرتے ہیں کہ یہ دعا اور ہر نیک عمل کا ثواب حضرت آدم علیہ السلام سے لے کر قیامت تک آنے والے تمام مومنین و مومنات کو پہنچے۔
                    اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔
                 </p>
@@ -292,8 +268,20 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
           </div>
         </div>
 
-        {/* Global Footer Decoration */}
-        <footer className="mt-20 text-center">
+        {/* Updated Footer Dedication with Founder Name */}
+        <footer className="mt-20 text-center px-4">
+          <div className="max-w-3xl mx-auto mb-10 arabic-text text-lg text-slate-600 leading-relaxed" dir="rtl">
+             <p className="mb-4">
+               اس ایپ پر تمام اذکار و پڑھائی کا ثواب حضرت آدم (ع) سے قیامت تک کے انبیاء، صحابہ کرام، اولیاء، صالحین، علمائے دین اور تمام مومنین و مومنات کو پہنچے۔
+             </p>
+             <p className="font-bold text-cyan-700">اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔</p>
+             
+             <div className="mt-8">
+               <p className="font-bold text-slate-800 text-xl mb-1">محمد فیصل</p>
+               <p className="text-xs font-black uppercase tracking-widest text-slate-400">Founder Esal-e-Sawab</p>
+             </div>
+          </div>
+
           <div className="flex items-center justify-center gap-4 mb-6">
              <div className="h-px w-12 bg-slate-200"></div>
              <i className="fas fa-star-and-crescent text-slate-300 text-sm"></i>
