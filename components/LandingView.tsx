@@ -123,7 +123,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                     <div className="w-16 h-16 bg-cyan-50 rounded-2xl flex items-center justify-center text-cyan-500 mx-auto mb-4 shadow-inner">
                       <i className="fas fa-moon text-2xl"></i>
                     </div>
-                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-widest mb-2">Find a Domain</h2>
+                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-widest mb-2">Find a Family</h2>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Search for your family's collective tracker</p>
                   </div>
 
@@ -161,12 +161,12 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                   </div>
 
                   <div className="pt-8 border-t border-slate-50 text-center">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] mb-6">Or Initiate New Collective</p>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] mb-6">Or Start New Circle</p>
                     <button 
                       onClick={() => setShowCreate(true)}
                       className="w-full bg-cyan-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-cyan-500/20 hover:bg-cyan-600 transition-all uppercase text-[12px] tracking-widest flex items-center justify-center gap-3 active:scale-95"
                     >
-                      <i className="fas fa-plus-circle"></i> Create New Legacy Domain
+                      <i className="fas fa-plus-circle"></i> Create New Family Legacy
                     </button>
                   </div>
                 </div>
@@ -190,7 +190,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                       <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Deceased Full Name</label>
                       <input 
                         type="text" 
-                        placeholder="e.g. Chaudhary Liaqat Ali" 
+                        placeholder="Enter the name of the deceased..." 
                         value={newName}
                         required
                         onChange={(e) => setNewName(e.target.value)}
@@ -201,7 +201,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                       <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Location / Ancestral Area</label>
                       <input 
                         type="text" 
-                        placeholder="e.g. Mozang, Lahore" 
+                        placeholder="e.g. Area, City" 
                         value={newLocation}
                         required
                         onChange={(e) => setNewLocation(e.target.value)}
@@ -224,7 +224,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                     disabled={isCreating}
                     className="w-full bg-cyan-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-cyan-500/20 hover:bg-cyan-600 disabled:bg-slate-300 transition-all uppercase text-[12px] tracking-widest mt-8"
                   >
-                    {isCreating ? 'Establishing Domain...' : 'Activate Collective Tracker'}
+                    {isCreating ? 'Establishing Circle...' : 'Activate Family Tracker'}
                   </button>
                 </form>
               )}

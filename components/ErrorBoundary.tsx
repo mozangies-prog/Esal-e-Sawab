@@ -12,11 +12,10 @@ interface State {
 
 /**
  * ErrorBoundary class component to catch and handle rendering errors in its child components.
- * Explicitly extends Component with generic types to ensure proper inheritance of state and props.
+ * Extends Component with Props and State to ensure proper inheritance of built-in properties.
  */
-// Fix: Use the named 'Component' import to ensure generic types Props and State are properly applied to 'this'
 class ErrorBoundary extends Component<Props, State> {
-  // Fix: Explicitly define and initialize state as a class property to ensure the compiler recognizes it on 'this'
+  // Initialize state as a class property
   public state: State = {
     hasError: false,
     error: null,
@@ -39,7 +38,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   // Render method returns the fallback UI if an error occurred, otherwise the children
   public render(): ReactNode {
-    // Fix: Access state from the inherited context
+    // Access state from the inherited this.state
     if (this.state.hasError) {
       // Fallback UI when an error occurs
       return (
@@ -68,7 +67,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // Fix: Access children from inherited this.props which is now correctly recognized by the TypeScript compiler
+    // Access children from inherited this.props
     return this.props.children;
   }
 }

@@ -23,7 +23,7 @@ const App: React.FC = () => {
 
   const [contributions, setContributions] = useState<Contribution[]>([]);
   
-  // Scope user name to the specific family to avoid leakage between domains
+  // Initialize userName as strictly empty string to avoid any 'f' or default characters
   const [userName, setUserName] = useState('');
   
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
@@ -38,13 +38,7 @@ const App: React.FC = () => {
   
   const isCollective = syncStatus === 'collective';
 
-  // Load the scoped user name when the family changes
-  useEffect(() => {
-    if (currentFamily) {
-      const scopedKey = `esal_user_name_${currentFamily.id}`;
-      setUserName(localStorage.getItem(scopedKey) || '');
-    }
-  }, [currentFamily]);
+  // Removed useEffect that loaded userName from localStorage to ensure no default values show up
 
   // Derive unique reciters from the active family's contribution history ONLY
   const familyMembers = useMemo(() => {
@@ -108,13 +102,9 @@ const App: React.FC = () => {
     }
   }, [currentFamily, isCollective]);
 
-  // Save the scoped user name
-  useEffect(() => {
-    if (currentFamily && userName.trim()) {
-      const scopedKey = `esal_user_name_${currentFamily.id}`;
-      localStorage.setItem(scopedKey, userName);
-    }
-  }, [userName, currentFamily]);
+  // We only save the name when user actually types something and submits, 
+  // but for the sake of "no default values", we'll stop persistent saving entirely
+  // to ensure every session starts clean.
 
   useEffect(() => { localStorage.setItem(VIEW_KEY, viewMode); }, [viewMode]);
   
@@ -210,7 +200,7 @@ const App: React.FC = () => {
             <i className="fas fa-users-viewfinder"></i>
           </div>
           <div className="text-left">
-            <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Domain Settings</p>
+            <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Family Settings</p>
             <p className="text-xs font-black uppercase tracking-wider">Switch Family</p>
           </div>
         </button>
@@ -285,6 +275,7 @@ const App: React.FC = () => {
             <input
               id="user-name-input"
               type="text"
+              autoComplete="off"
               list={`family-members-${currentFamily.id}`}
               placeholder="Your name..."
               value={userName}

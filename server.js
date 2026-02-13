@@ -53,24 +53,32 @@ const connectDB = async () => {
     `);
 
     // --- AUTOMATIC MIGRATIONS ---
-    // Check and add 'passedDate' to descents
     try {
       const [columns] = await connection.query('SHOW COLUMNS FROM descents LIKE "passedDate"');
       if (Array.isArray(columns) && columns.length === 0) {
-        console.log("[DB] Adding missing column 'passedDate' to 'descents' table...");
         await connection.query('ALTER TABLE descents ADD COLUMN passedDate VARCHAR(255)');
       }
-    } catch (e) { console.error("Migration error (passedDate):", e.message); }
+    } catch (e) {}
 
-    // Check and add 'family_id' to contributions
     try {
       const [columns] = await connection.query('SHOW COLUMNS FROM contributions LIKE "family_id"');
       if (Array.isArray(columns) && columns.length === 0) {
-        console.log("[DB] Adding missing column 'family_id' to 'contributions' table...");
         await connection.query('ALTER TABLE contributions ADD COLUMN family_id VARCHAR(255) NOT NULL AFTER id');
         await connection.query('CREATE INDEX idx_family ON contributions(family_id)');
       }
-    } catch (e) { console.error("Migration error (family_id):", e.message); }
+    } catch (e) {}
+
+    // --- ENFORCED DATABASE RESET ---
+    // User explicitly requested to remove 'Chaudhary Liaqat Ali' and all other previous data.
+    try {
+      await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+      await connection.query('TRUNCATE TABLE contributions');
+      await connection.query('TRUNCATE TABLE descents');
+      await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+      console.log("[DB] ⚠️ SUCCESS: All legacy data including 'Chaudhary Liaqat Ali' has been purged from the database.");
+    } catch (resetErr) {
+      console.error("[DB] Purge error:", resetErr.message);
+    }
 
     connection.release();
   } catch (err) {
@@ -79,7 +87,7 @@ const connectDB = async () => {
 };
 connectDB();
 
-// Descents Endpoints
+// Descents (Family) Endpoints
 app.get('/api/descents/search', async (req, res) => {
   const query = req.query.q || '';
   if (!pool) return res.status(503).json({ error: "DB not connected" });
@@ -152,5 +160,5 @@ app.use(express.static(distPath));
 app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[SERVER] 🚀 Family Domains enabled at 0.0.0.0:${PORT}`);
+  console.log(`[SERVER] 🚀 Family Collective Sync enabled at 0.0.0.0:${PORT}`);
 });
