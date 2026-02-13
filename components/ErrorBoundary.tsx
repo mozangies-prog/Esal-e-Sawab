@@ -1,5 +1,5 @@
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children?: ReactNode;
@@ -12,10 +12,10 @@ interface State {
 
 /**
  * ErrorBoundary class component to catch and handle rendering errors in its child components.
- * Extends Component with Props and State to ensure proper inheritance of built-in properties.
+ * Extends React.Component with Props and State to ensure proper inheritance of built-in properties.
  */
-class ErrorBoundary extends Component<Props, State> {
-  // Fix: Added explicit constructor to ensure 'this.props' is correctly typed and inherited from React.Component
+class ErrorBoundary extends React.Component<Props, State> {
+  // Fix: Explicitly extend React.Component and define constructor to initialize state correctly
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -41,7 +41,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   // Render method returns the fallback UI if an error occurred, otherwise the children
   public render(): ReactNode {
-    // Access state from the inherited this.state
+    // Fix: Access state property from React.Component base class to resolve property access error
     if (this.state.hasError) {
       // Fallback UI when an error occurs
       return (
@@ -56,7 +56,7 @@ class ErrorBoundary extends Component<Props, State> {
             </p>
             <div className="bg-slate-50 rounded-lg p-4 mb-6 text-left overflow-auto max-h-40">
               <code className="text-[10px] text-red-600 font-mono">
-                {this.state.error?.toString()}
+                {this.state.error?.toString() || "Unknown error"}
               </code>
             </div>
             <button
@@ -70,7 +70,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // Access children from inherited this.props
+    // Fix: Access children from React.Component props to resolve property access error
     return this.props.children;
   }
 }
