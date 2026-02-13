@@ -9,20 +9,11 @@ import { getSpiritualInsight } from './services/geminiService';
 import { logger } from './services/logger';
 import { apiService } from './services/apiService';
 
-const USER_KEY = 'esal_user_name';
 const VIEW_KEY = 'esal_view_mode';
 const FAMILY_KEY = 'esal_current_family';
 
 const POLLING_FAST = 5000;
 const POLLING_SLOW = 20000;
-
-const FAMILY_NAMES = [
-  "Mussarat Parveen", "Muhammad Faisal", "Rabia Liaqat", "Yasir Liaqat",
-  "Fatima Liaqat", "Madiha Liaqat", "Afshan Faisal", "Nageen Yasir",
-  "Saeed Latif", "Ahsan Ellahi", "Numaira Saeed", "Humna Saeed",
-  "Taha Saeed", "Haleema Fasial", "Ahmed Faisal", "Ibraheem Yasir",
-  "Mustafa Yasir", "Ali Yasir", "Abdul Hadi", "Anabia Yasir", "Abdullah Ahsan"
-];
 
 const App: React.FC = () => {
   const [currentFamily, setCurrentFamily] = useState<Descent | null>(() => {
@@ -31,7 +22,10 @@ const App: React.FC = () => {
   });
 
   const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [userName, setUserName] = useState(() => localStorage.getItem(USER_KEY) || '');
+  
+  // Scope user name to the specific family to avoid leakage between domains
+  const [userName, setUserName] = useState('');
+  
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => 
     (localStorage.getItem(VIEW_KEY) as 'grid' | 'list') || 'grid'
@@ -43,6 +37,20 @@ const App: React.FC = () => {
   const [aiInsight, setAiInsight] = useState<string>("Bismillah. Your collective prayers are a gift that transcends this world.");
   
   const isCollective = syncStatus === 'collective';
+
+  // Load the scoped user name when the family changes
+  useEffect(() => {
+    if (currentFamily) {
+      const scopedKey = `esal_user_name_${currentFamily.id}`;
+      setUserName(localStorage.getItem(scopedKey) || '');
+    }
+  }, [currentFamily]);
+
+  // Derive unique reciters from the active family's contribution history ONLY
+  const familyMembers = useMemo(() => {
+    const names = contributions.map(c => c.contributorName);
+    return Array.from(new Set(names)).sort();
+  }, [contributions]);
 
   const anniversaryInfo = useMemo(() => {
     if (!currentFamily?.passedDate) return null;
@@ -100,8 +108,16 @@ const App: React.FC = () => {
     }
   }, [currentFamily, isCollective]);
 
-  useEffect(() => { localStorage.setItem(USER_KEY, userName); }, [userName]);
+  // Save the scoped user name
+  useEffect(() => {
+    if (currentFamily && userName.trim()) {
+      const scopedKey = `esal_user_name_${currentFamily.id}`;
+      localStorage.setItem(scopedKey, userName);
+    }
+  }, [userName, currentFamily]);
+
   useEffect(() => { localStorage.setItem(VIEW_KEY, viewMode); }, [viewMode]);
+  
   useEffect(() => {
     if (currentFamily) {
       localStorage.setItem(FAMILY_KEY, JSON.stringify(currentFamily));
@@ -192,8 +208,8 @@ const App: React.FC = () => {
             <i className="fas fa-users-viewfinder"></i>
           </div>
           <div className="text-left">
-            <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Session Settings</p>
-            <p className="text-xs font-black uppercase tracking-wider">Switch Family / Search</p>
+            <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Domain Settings</p>
+            <p className="text-xs font-black uppercase tracking-wider">Switch Family</p>
           </div>
         </button>
 
@@ -239,12 +255,6 @@ const App: React.FC = () => {
                 </div>
               </div>
             </div>
-            {anniversaryInfo.isToday && (
-              <div className="bg-white/10 backdrop-blur-md px-10 py-4 rounded-3xl border border-white/20 text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-1">A Sunnah Gift</p>
-                <p className="text-sm italic font-medium">May Allah grant them the highest stations in Jannah. Ameen.</p>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -269,18 +279,18 @@ const App: React.FC = () => {
             <i className="fas fa-user-circle text-base"></i>
           </div>
           <div className="flex-1 w-full">
-            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1">Contributed By</p>
+            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1">Contributed By (Family Circle)</p>
             <input
               id="user-name-input"
               type="text"
-              list="family-names"
+              list={`family-members-${currentFamily.id}`}
               placeholder="Your name..."
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               className="w-full bg-slate-50/50 rounded-xl px-4 py-3 outline-none text-slate-700 font-bold text-sm focus:border-cyan-400 focus:bg-white border border-transparent transition-all shadow-inner"
             />
-            <datalist id="family-names">
-              {FAMILY_NAMES.map(name => <option key={name} value={name} />)}
+            <datalist id={`family-members-${currentFamily.id}`}>
+              {familyMembers.map(name => <option key={name} value={name} />)}
             </datalist>
           </div>
         </div>
