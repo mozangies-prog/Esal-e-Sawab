@@ -15,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 let pool;
+
 const connectDB = async () => {
   if (!process.env.MYSQL_URL) {
     console.error("[CRITICAL] MYSQL_URL is missing.");
@@ -31,35 +32,45 @@ const connectDB = async () => {
     const connection = await pool.getConnection();
     console.log("[DB] ✅ Connection Successful.");
     
-    // Create tables with passedDate
+    // Create tables if they don't exist
     await connection.query(`
       CREATE TABLE IF NOT EXISTS descents (
         id VARCHAR(255) PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         location VARCHAR(255) NOT NULL,
-        passedDate VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    // Ensure passedDate exists if table was created previously
-    try {
-      await connection.query('ALTER TABLE descents ADD COLUMN passedDate VARCHAR(255)');
-    } catch (e) {
-      // Column likely already exists
-    }
-
     await connection.query(`
       CREATE TABLE IF NOT EXISTS contributions (
         id VARCHAR(255) PRIMARY KEY,
-        family_id VARCHAR(255) NOT NULL,
         contributorName VARCHAR(255) NOT NULL,
         recitationType VARCHAR(255) NOT NULL,
         count INT NOT NULL,
-        timestamp BIGINT NOT NULL,
-        INDEX idx_family (family_id)
+        timestamp BIGINT NOT NULL
       )
     `);
+
+    // --- AUTOMATIC MIGRATIONS ---
+    // Check and add 'passedDate' to descents
+    try {
+      const [columns] = await connection.query('SHOW COLUMNS FROM descents LIKE "passedDate"');
+      if (Array.isArray(columns) && columns.length === 0) {
+        console.log("[DB] Adding missing column 'passedDate' to 'descents' table...");
+        await connection.query('ALTER TABLE descents ADD COLUMN passedDate VARCHAR(255)');
+      }
+    } catch (e) { console.error("Migration error (passedDate):", e.message); }
+
+    // Check and add 'family_id' to contributions
+    try {
+      const [columns] = await connection.query('SHOW COLUMNS FROM contributions LIKE "family_id"');
+      if (Array.isArray(columns) && columns.length === 0) {
+        console.log("[DB] Adding missing column 'family_id' to 'contributions' table...");
+        await connection.query('ALTER TABLE contributions ADD COLUMN family_id VARCHAR(255) NOT NULL AFTER id');
+        await connection.query('CREATE INDEX idx_family ON contributions(family_id)');
+      }
+    } catch (e) { console.error("Migration error (family_id):", e.message); }
 
     connection.release();
   } catch (err) {
