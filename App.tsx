@@ -23,7 +23,7 @@ const App: React.FC = () => {
 
   const [contributions, setContributions] = useState<Contribution[]>([]);
   
-  // Initialize userName as strictly empty string to avoid any 'f' or default characters
+  // Initialize userName as strictly empty string to ensure no characters like 'f' appear by default
   const [userName, setUserName] = useState('');
   
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
@@ -37,8 +37,6 @@ const App: React.FC = () => {
   const [aiInsight, setAiInsight] = useState<string>("Bismillah. Your collective prayers are a gift that transcends this world.");
   
   const isCollective = syncStatus === 'collective';
-
-  // Removed useEffect that loaded userName from localStorage to ensure no default values show up
 
   // Derive unique reciters from the active family's contribution history ONLY
   const familyMembers = useMemo(() => {
@@ -101,10 +99,6 @@ const App: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [currentFamily, isCollective]);
-
-  // We only save the name when user actually types something and submits, 
-  // but for the sake of "no default values", we'll stop persistent saving entirely
-  // to ensure every session starts clean.
 
   useEffect(() => { localStorage.setItem(VIEW_KEY, viewMode); }, [viewMode]);
   
@@ -220,7 +214,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Anniversary Striking Reminder */}
+      {/* Anniversary Reminder */}
       {anniversaryInfo && (
         <div className={`mb-8 p-6 rounded-[2.5rem] border transition-all duration-1000 relative overflow-hidden ${anniversaryInfo.isToday ? 'bg-gradient-to-br from-cyan-600 via-cyan-500 to-cyan-400 border-cyan-300 shadow-2xl shadow-cyan-500/40 text-white' : 'bg-white border-cyan-100 shadow-sm'}`}>
           {anniversaryInfo.isToday && (
@@ -274,8 +268,10 @@ const App: React.FC = () => {
             <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1">Contributed By (Family Circle)</p>
             <input
               id="user-name-input"
+              key={`name-input-${currentFamily.id}`}
               type="text"
-              autoComplete="off"
+              name={`contributor_${currentFamily.id}_${Math.random().toString(36).substring(7)}`}
+              autoComplete="new-password"
               list={`family-members-${currentFamily.id}`}
               placeholder="Your name..."
               value={userName}
@@ -337,7 +333,7 @@ const App: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <div className="bg-cyan-50 text-cyan-500 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter mb-1 border border-cyan-100">
-                      Hissa Shamil
+                      Contributed
                     </div>
                     <p className="text-[9px] text-slate-300 font-bold uppercase">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>

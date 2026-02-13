@@ -15,11 +15,14 @@ interface State {
  * Extends Component with Props and State to ensure proper inheritance of built-in properties.
  */
 class ErrorBoundary extends Component<Props, State> {
-  // Initialize state as a class property
-  public state: State = {
-    hasError: false,
-    error: null,
-  };
+  // Fix: Added explicit constructor to ensure 'this.props' is correctly typed and inherited from React.Component
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+    };
+  }
 
   /**
    * Update state so the next render will show the fallback UI.
