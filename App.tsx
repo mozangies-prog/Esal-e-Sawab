@@ -130,7 +130,8 @@ const App: React.FC = () => {
     const trimmedName = userName.trim();
     if (!trimmedName) {
       alert("Please enter your name first.");
-      document.getElementById('user-name-input')?.focus();
+      const inputEl = document.getElementById('user-name-input');
+      inputEl?.focus();
       return;
     }
 
@@ -146,6 +147,7 @@ const App: React.FC = () => {
     };
 
     setLastAddedId(newContrib.id);
+    // Optimistic update
     setContributions(prev => [newContrib, ...prev]);
 
     const success = await apiService.postContribution(newContrib);
@@ -315,8 +317,8 @@ const App: React.FC = () => {
       <div className="bg-white rounded-[2.5rem] border border-cyan-50 p-6 sm:p-10 shadow-sm max-w-6xl mx-auto mb-10">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-base sm:text-xl font-black text-slate-800 uppercase tracking-widest">Global Activity</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Live updates from family members</p>
+            <h2 className="text-base sm:text-xl font-black text-slate-800 uppercase tracking-widest">Recent Participation</h2>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Live collective updates (Quantities hidden for privacy)</p>
           </div>
           <div className="hidden sm:flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${isCollective ? 'bg-green-400 animate-pulse' : 'bg-slate-300'}`}></span>
@@ -343,7 +345,9 @@ const App: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-cyan-600 font-black text-lg">+{c.count.toLocaleString()}</p>
+                    <div className="bg-cyan-50 text-cyan-500 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter mb-1 border border-cyan-100">
+                      Hissa Shamil
+                    </div>
                     <p className="text-[9px] text-slate-300 font-bold uppercase">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
                 </div>

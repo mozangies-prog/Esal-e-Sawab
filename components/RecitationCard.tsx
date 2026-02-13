@@ -55,7 +55,7 @@ const RecitationCard: React.FC<RecitationCardProps> = ({ info, totalCount, onAdd
           ))}
         </div>
 
-        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-md overflow-hidden w-full md:w-40">
+        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-md overflow-hidden w-full md:w-44 shrink-0">
           <input
             type="number"
             placeholder="Custom"
@@ -63,7 +63,10 @@ const RecitationCard: React.FC<RecitationCardProps> = ({ info, totalCount, onAdd
             value={customAmount}
             onChange={(e) => setCustomAmount(e.target.value)}
           />
-          <button onClick={handleCustomAdd} className="bg-cyan-400 text-white px-2.5 py-1 text-[9px] font-black uppercase hover:bg-cyan-500">
+          <button 
+            onClick={handleCustomAdd} 
+            className="bg-cyan-400 text-white px-4 py-1 text-[9px] font-black uppercase hover:bg-cyan-500 shrink-0 whitespace-nowrap transition-colors"
+          >
             Add
           </button>
         </div>
@@ -109,14 +112,14 @@ const RecitationCard: React.FC<RecitationCardProps> = ({ info, totalCount, onAdd
         <input
           type="number"
           placeholder="Qty"
-          className="flex-grow px-2 py-1.5 text-[9px] outline-none bg-transparent text-slate-700 font-bold"
+          className="flex-grow min-w-0 px-2 py-1.5 text-[9px] outline-none bg-transparent text-slate-700 font-bold"
           value={customAmount}
           onChange={(e) => setCustomAmount(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleCustomAdd()}
         />
         <button 
           onClick={handleCustomAdd}
-          className="bg-cyan-400 text-white px-3 py-1.5 text-[9px] font-black uppercase hover:bg-cyan-500 transition-all"
+          className="bg-cyan-400 text-white px-3.5 py-1.5 text-[9px] font-black uppercase hover:bg-cyan-500 transition-all shrink-0 whitespace-nowrap"
         >
           Add
         </button>
