@@ -1,17 +1,15 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { RecitationType, Contribution, EsalData, Descent } from './types';
+import { RecitationType, Contribution, Descent } from './types';
 import { RECITATIONS } from './constants';
 import RecitationCard from './components/RecitationCard';
 import RecitationCharts from './components/RecitationCharts';
 import LandingView from './components/LandingView';
 import { getSpiritualInsight } from './services/geminiService';
-import { logger } from './services/logger';
 import { apiService } from './services/apiService';
 
 const VIEW_KEY = 'esal_view_mode';
 const FAMILY_KEY = 'esal_current_family';
-const USER_NAME_KEY = 'esal_user_name';
 
 const POLLING_FAST = 5000;
 const POLLING_SLOW = 20000;
@@ -39,7 +37,8 @@ const App: React.FC = () => {
   });
 
   const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [userName, setUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
+  // User requested name to be empty/hidden by default, so we no longer load from localStorage
+  const [userName, setUserName] = useState('');
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => 
     (localStorage.getItem(VIEW_KEY) as 'grid' | 'list') || 'grid'
@@ -52,7 +51,6 @@ const App: React.FC = () => {
   
   const isCollective = syncStatus === 'collective';
 
-  // Fix: Explicitly type 'n' as string to resolve "Property 'length' does not exist on type 'unknown'" error on line 57
   const familyMembers = useMemo(() => {
     const names = contributions.map(c => c.contributorName);
     return Array.from(new Set(names)).filter((n: string) => n.length > 0).sort();
@@ -86,7 +84,8 @@ const App: React.FC = () => {
   }, [currentFamily, isCollective]);
 
   useEffect(() => { localStorage.setItem(VIEW_KEY, viewMode); }, [viewMode]);
-  useEffect(() => { localStorage.setItem(USER_NAME_KEY, userName); }, [userName]);
+  // No longer saving userName to localStorage per user request
+  
   useEffect(() => {
     if (currentFamily) localStorage.setItem(FAMILY_KEY, JSON.stringify(currentFamily));
     else localStorage.removeItem(FAMILY_KEY);
@@ -202,7 +201,7 @@ const App: React.FC = () => {
         ))}
       </div>
 
-      {/* Activity Logs - Updated to hide specific names and include 'Contributed' label */}
+      {/* Activity Logs - Updated per latest request */}
       <div className="bg-white rounded-[2.5rem] border border-cyan-50 p-6 sm:p-10 shadow-sm max-w-6xl mx-auto mb-10">
         <h2 className="text-base sm:text-xl font-black text-slate-800 uppercase tracking-widest mb-6">Recent Participation</h2>
         <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar no-scrollbar">
@@ -217,14 +216,22 @@ const App: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
                     <div>
-                      <p className="text-sm font-black text-slate-800 leading-none mb-1">
-                        <span className="text-cyan-500 mr-2">Contributed</span> {c.count.toLocaleString()}x {c.recitationType}
+                      {/* Left Side: Only show contributor name, hide quantity/type */}
+                      <p className="text-sm font-black text-slate-800 leading-none">
+                        {c.contributorName}
                       </p>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Added by a Family Member</p>
+                      <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">Shared in the Rewards</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-[9px] text-slate-300 font-bold uppercase">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    {/* Right Side: Move "Contributed" here with timestamp */}
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                      <span className="text-cyan-500 font-black mr-1">Contributed</span>
+                      {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    <p className="text-[8px] text-slate-300 font-bold uppercase mt-0.5">
+                      {new Date(c.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -235,7 +242,7 @@ const App: React.FC = () => {
 
       <RecitationCharts contributions={contributions} />
 
-      {/* Updated Footer */}
+      {/* Footer */}
       <footer className="text-center py-16 mt-16 border-t border-slate-100/60 max-w-4xl mx-auto">
         <div className="arabic-text text-lg text-slate-500 leading-relaxed mb-10" dir="rtl">
            <div className="flex flex-col items-center space-y-4">
