@@ -7,6 +7,22 @@ interface LandingViewProps {
   onSelectFamily: (family: Descent) => void;
 }
 
+const TasbeehLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="40" r="30" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 4" />
+    <circle cx="50" cy="10" r="4" fill="currentColor" />
+    <circle cx="71" cy="19" r="4" fill="currentColor" />
+    <circle cx="80" cy="40" r="4" fill="currentColor" />
+    <circle cx="71" cy="61" r="4" fill="currentColor" />
+    <circle cx="50" cy="70" r="4" fill="currentColor" />
+    <circle cx="29" cy="61" r="4" fill="currentColor" />
+    <circle cx="20" cy="40" r="4" fill="currentColor" />
+    <circle cx="29" cy="19" r="4" fill="currentColor" />
+    <path d="M50 70V85M45 92L50 85L55 92" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M47 95V90M50 97V90M53 95V90" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+  </svg>
+);
+
 const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Descent[]>([]);
@@ -60,31 +76,40 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center animate-in fade-in duration-1000">
       
-      {/* Top Bar Navigation (Dark Theme) - Icons and Date Removed */}
-      <div className="w-full bg-[#4b5563] text-white py-4 px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between shadow-md z-50">
-        <div className="flex items-center gap-4 mb-2 md:mb-0">
-          <div className="flex items-center gap-2">
+      {/* Top Bar Navigation */}
+      <div className="w-full bg-[#4b5563] text-white py-3 px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between shadow-md z-50">
+        <div className="flex items-center gap-3 mb-2 md:mb-0">
+          <div className="flex items-center gap-2 group cursor-default">
+            <TasbeehLogo className="w-6 h-6 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] transition-transform group-hover:rotate-12" />
             <span className="text-sm font-black uppercase tracking-tighter text-cyan-400">Esal-e-Sawab</span>
           </div>
         </div>
         
-        {/* Centered Bismillah - Elegant Size */}
+        {/* Centered Bismillah */}
         <div className="arabic-text text-xl sm:text-2xl font-normal drop-shadow-sm" style={{ lineHeight: '1.2' }}>
           بِسْمِ اللہِ الرَّحْمٰنِ الرَّحِیْمِ
         </div>
 
-        <div className="hidden md:block w-32"></div> {/* Spacer to maintain balance */}
+        <div className="hidden md:block w-32"></div>
       </div>
 
-      <div className="max-w-6xl w-full px-4 pt-12 pb-20">
+      <div className="max-w-6xl w-full px-4 pt-10 pb-20">
         
-        {/* Branding Title Updated */}
-        <div className="text-center mb-8">
-           <h1 className="text-3xl sm:text-5xl font-black text-slate-800 uppercase tracking-tighter mb-2">Esal-e-Sawab – Connect, Pray, Remember</h1>
+        {/* Branding Hero Section */}
+        <div className="text-center mb-10 flex flex-col items-center">
+           <div className="mb-6 animate-bounce-slow">
+              <div className="relative">
+                <div className="absolute inset-0 bg-cyan-400 blur-3xl opacity-10 rounded-full"></div>
+                <TasbeehLogo className="w-20 h-20 text-cyan-500 relative z-10 drop-shadow-xl" />
+              </div>
+           </div>
+           <h1 className="text-3xl sm:text-5xl font-black text-slate-800 uppercase tracking-tighter mb-2">
+             Esal-e-Sawab – Connect, Pray, Remember
+           </h1>
            <p className="text-[10px] font-black text-cyan-500 uppercase tracking-[0.5em]">Digital Spiritual Legacy</p>
         </div>
 
-        {/* Salawat - Reduced Font Size for better aesthetics */}
+        {/* Salawat */}
         <div className="text-center mb-16">
           <div className="arabic-text text-lg sm:text-xl text-slate-700 leading-relaxed mb-8 px-4 font-normal max-w-4xl mx-auto">
             اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ، وَعَلَى آلِ مُحَمَّدٍ، كَمَا صَلَّيْتَ عَلَى إِبْرَاهِيمَ وَعَلَى آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ<br/>
@@ -109,7 +134,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
 
         <div className="flex flex-col lg:flex-row gap-10 items-stretch mb-20">
           
-          {/* Action Card (Search/Create) */}
+          {/* Action Card */}
           <div className="w-full lg:w-1/2">
             <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-cyan-500/5 p-8 sm:p-12 border border-slate-100 relative overflow-hidden h-full">
               {!showCreate ? (
@@ -202,7 +227,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
             </div>
           </div>
 
-          {/* Instructions Panel - Elegant Typography */}
+          {/* Instructions Panel */}
           <div className="w-full lg:w-1/2" dir="rtl">
             <div className="bg-white/90 border border-cyan-100 rounded-[2.5rem] p-8 sm:p-10 shadow-xl relative overflow-hidden h-full">
               <h2 className="arabic-text text-2xl font-bold text-cyan-600 mb-6 border-b border-cyan-50 pb-4">رہنمائی برائے استعمال:</h2>
@@ -233,7 +258,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
 
         </div>
 
-        {/* Quran & Sunnah Section - Balanced Font Sizes */}
+        {/* Quran & Sunnah Section */}
         <div className="max-w-4xl mx-auto text-center" dir="rtl">
           <div className="bg-white border border-slate-200 rounded-[3rem] p-10 sm:p-16 shadow-sm border-t-8 border-t-cyan-500">
              <h2 className="arabic-text text-2xl sm:text-3xl font-bold text-slate-800 mb-10 leading-snug">
@@ -260,34 +285,38 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectFamily }) => {
                    <p className="text-sm text-cyan-700 font-bold">اے اللہ! تمام مومن مردوں اور عورتوں، زندہ اور وفات پا چکے سب کی مغفرت فرما۔</p>
                 </div>
 
-                <p className="font-bold text-slate-800 pt-8 text-lg sm:text-xl">
-                   ہم نیت کرتے ہیں کہ یہ دعا اور ہر نیک عمل کا ثواب حضرت آدم علیہ السلام سے لے کر قیامت تک آنے والے تمام مومنین و مومنات کو پہنچے۔
-                   اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔
-                </p>
+                <div className="pt-8 space-y-4">
+                  <p className="font-bold text-slate-800 text-lg sm:text-xl">
+                    اس ایپ پر تمام اذکار و پڑھائی کا ثواب حضرت آدم (ع) سے قیامت تک کے انبیاء، صحابہ کرام، اولیاء، صالحین، علمائے دین اور تمام مومنین و مومنات کو پہنچے۔
+                  </p>
+                  <p className="font-bold text-cyan-700 text-lg sm:text-xl">
+                    اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔
+                  </p>
+                  <p className="font-bold text-slate-800 text-lg sm:text-xl">محمد فیصل</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Founder Esal-e-Sawab</p>
+                </div>
              </div>
           </div>
         </div>
 
-        {/* Updated Footer Dedication with Founder Name */}
+        {/* Footer Dedication */}
         <footer className="mt-20 text-center px-4">
           <div className="max-w-3xl mx-auto mb-10 arabic-text text-lg text-slate-600 leading-relaxed" dir="rtl">
-             <p className="mb-4">
-               اس ایپ پر تمام اذکار و پڑھائی کا ثواب حضرت آدم (ع) سے قیامت تک کے انبیاء، صحابہ کرام، اولیاء، صالحین، علمائے دین اور تمام مومنین و مومنات کو پہنچے۔
-             </p>
-             <p className="font-bold text-cyan-700">اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔</p>
-             
-             <div className="mt-8">
-               <p className="font-bold text-slate-800 text-xl mb-1">محمد فیصل</p>
-               <p className="text-xs font-black uppercase tracking-widest text-slate-400">Founder Esal-e-Sawab</p>
+             <div className="space-y-6 flex flex-col items-center">
+               <p className="mb-4">
+                 اس ایپ پر تمام اذکار و پڑھائی کا ثواب حضرت آدم (ع) سے قیامت تک کے انبیاء، صحابہ کرام، اولیاء، صالحین، علمائے دین اور تمام مومنین و مومنات کو پہنچے۔
+               </p>
+               <p className="font-bold text-cyan-700">اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔</p>
+               
+               <div className="mt-8 flex flex-col items-center">
+                 <TasbeehLogo className="w-10 h-10 text-slate-300 mb-4 opacity-50" />
+                 <p className="font-bold text-slate-800 text-xl mb-1">محمد فیصل</p>
+                 <p className="text-xs font-black uppercase tracking-widest text-slate-400">Founder Esal-e-Sawab</p>
+               </div>
              </div>
           </div>
 
-          <div className="flex items-center justify-center gap-4 mb-6">
-             <div className="h-px w-12 bg-slate-200"></div>
-             <i className="fas fa-star-and-crescent text-slate-300 text-sm"></i>
-             <div className="h-px w-12 bg-slate-200"></div>
-          </div>
-          <p className="text-[10px] uppercase font-black tracking-[0.8em] text-slate-300">Privacy First • Community Driven • Eternal Rewards</p>
+          <p className="text-[10px] uppercase font-black tracking-[0.8em] text-slate-300 mt-12">Privacy First • Community Driven • Eternal Rewards</p>
         </footer>
       </div>
     </div>

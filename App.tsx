@@ -15,6 +15,22 @@ const FAMILY_KEY = 'esal_current_family';
 const POLLING_FAST = 5000;
 const POLLING_SLOW = 20000;
 
+const TasbeehLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="40" r="30" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 4" />
+    <circle cx="50" cy="10" r="4" fill="currentColor" />
+    <circle cx="71" cy="19" r="4" fill="currentColor" />
+    <circle cx="80" cy="40" r="4" fill="currentColor" />
+    <circle cx="71" cy="61" r="4" fill="currentColor" />
+    <circle cx="50" cy="70" r="4" fill="currentColor" />
+    <circle cx="29" cy="61" r="4" fill="currentColor" />
+    <circle cx="20" cy="40" r="4" fill="currentColor" />
+    <circle cx="29" cy="19" r="4" fill="currentColor" />
+    <path d="M50 70V85M45 92L50 85L55 92" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M47 95V90M50 97V90M53 95V90" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+  </svg>
+);
+
 const App: React.FC = () => {
   const [currentFamily, setCurrentFamily] = useState<Descent | null>(() => {
     const saved = localStorage.getItem(FAMILY_KEY);
@@ -39,24 +55,6 @@ const App: React.FC = () => {
     const names = contributions.map(c => c.contributorName);
     return Array.from(new Set(names)).sort();
   }, [contributions]);
-
-  const anniversaryInfo = useMemo(() => {
-    if (!currentFamily?.passedDate) return null;
-    try {
-      const passed = new Date(currentFamily.passedDate);
-      if (isNaN(passed.getTime())) return null;
-      const today = new Date();
-      const currentToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      let next = new Date(today.getFullYear(), passed.getMonth(), passed.getDate());
-      if (next < currentToday) {
-        next = new Date(today.getFullYear() + 1, passed.getMonth(), passed.getDate());
-      }
-      const diff = next.getTime() - currentToday.getTime();
-      const days = Math.ceil(diff / (1000 * 3600 * 24));
-      const isToday = today.getMonth() === passed.getMonth() && today.getDate() === passed.getDate();
-      return { days, isToday, dateLabel: passed.toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' }) };
-    } catch (e) { return null; }
-  }, [currentFamily]);
 
   const syncWithServer = async () => {
     if (!currentFamily) return;
@@ -134,19 +132,22 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-12 px-3 sm:px-6 lg:px-8 pt-4 max-w-[1600px] mx-auto transition-all animate-in fade-in duration-700">
-      {/* Header Bar - Icons Removed */}
+      {/* Header Bar */}
       <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
         <button 
           onClick={() => setCurrentFamily(null)}
           className="group flex items-center gap-4 bg-white hover:bg-cyan-600 border-2 border-cyan-500 text-cyan-600 hover:text-white p-2 px-6 rounded-2xl transition-all shadow-lg shadow-cyan-500/10 active:scale-95"
         >
           <div className="text-left">
-            <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Family Settings</p>
+            <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Legacy Settings</p>
             <p className="text-xs font-black uppercase tracking-wider">Switch Family</p>
           </div>
         </button>
 
         <div className="flex-1 flex flex-col md:flex-row items-center gap-4 bg-white/60 backdrop-blur-sm p-3 rounded-2xl border border-cyan-50">
+          <div className="flex items-center justify-center p-2 hidden sm:block">
+             <TasbeehLogo className="w-10 h-10 text-cyan-500" />
+          </div>
           <div className="flex-1 text-center md:text-left px-4">
              <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em] mb-1">Honoring the legacy of</p>
              <h1 className="serif-font text-2xl sm:text-3xl font-black text-slate-800 leading-none">
@@ -174,9 +175,6 @@ const App: React.FC = () => {
               onChange={(e) => setUserName(e.target.value)}
               className="w-full bg-slate-50/50 rounded-xl px-4 py-3 outline-none text-slate-700 font-bold text-sm focus:border-cyan-400 focus:bg-white border border-transparent transition-all shadow-inner"
             />
-            <datalist id={`family-members-${currentFamily.id}`}>
-              {familyMembers.map(name => <option key={name} value={name} />)}
-            </datalist>
           </div>
         </div>
         <div className="flex bg-slate-100/50 rounded-2xl p-1.5 border border-slate-200/50 w-full md:w-auto">
@@ -224,25 +222,24 @@ const App: React.FC = () => {
 
       <RecitationCharts contributions={contributions} />
 
-      {/* Updated Footer with Founder Dedication */}
+      {/* Updated Footer */}
       <footer className="text-center py-16 mt-16 border-t border-slate-100/60 max-w-4xl mx-auto">
         <div className="arabic-text text-lg text-slate-500 leading-relaxed mb-10" dir="rtl">
-           <p className="mb-4">
-             اس ایپ پر تمام اذکار و پڑھائی کا ثواب حضرت آدم (ع) سے قیامت تک کے انبیاء، صحابہ کرام، اولیاء، صالحین، علمائے دین اور تمام مومنین و مومنات کو پہنچے۔
-           </p>
-           <p className="font-bold text-cyan-600/80">اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔</p>
-           
-           <div className="mt-8">
-             <p className="font-bold text-slate-800 text-lg mb-1">محمد فیصل</p>
-             <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">Founder Esal-e-Sawab</p>
+           <div className="flex flex-col items-center space-y-4">
+             <p className="mb-4">
+               اس ایپ پر تمام اذکار و پڑھائی کا ثواب حضرت آدم (ع) سے قیامت تک کے انبیاء، صحابہ کرام، اولیاء، صالحین، علمائے دین اور تمام مومنین و مومنات کو پہنچے۔
+             </p>
+             <p className="font-bold text-cyan-600/80">اللہ تعالیٰ ہم سب کی دعاؤں کو قبول فرمائے۔ آمین۔</p>
+             
+             <div className="mt-8 flex flex-col items-center">
+               <TasbeehLogo className="w-10 h-10 text-slate-300 mb-4 opacity-50" />
+               <p className="font-bold text-slate-800 text-lg mb-1">محمد فیصل</p>
+               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">Founder Esal-e-Sawab</p>
+             </div>
            </div>
         </div>
         
-        <div className="flex items-center justify-center gap-4 mb-4 opacity-30">
-           <div className="h-px w-8 bg-slate-400"></div>
-           <div className="h-px w-8 bg-slate-400"></div>
-        </div>
-        <p className="text-[10px] uppercase font-black tracking-[0.6em] text-slate-300">Sadaqah Jariyah Platform</p>
+        <p className="text-[10px] uppercase font-black tracking-[0.6em] text-slate-300 mt-12">Sadaqah Jariyah Platform</p>
       </footer>
     </div>
   );
