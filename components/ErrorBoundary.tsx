@@ -12,14 +12,16 @@ interface State {
 
 /**
  * ErrorBoundary class component to catch and handle rendering errors in its child components.
- * Fix: Explicitly using Component from 'react' helps ensure this.props and this.state are correctly typed and recognized by the TypeScript compiler.
  */
 class ErrorBoundary extends Component<Props, State> {
-  // Explicitly initializing state to ensure it is correctly typed on the instance
-  public state: State = {
-    hasError: false,
-    error: null,
-  };
+  // Use constructor to ensure this.props is correctly recognized by TypeScript
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+    };
+  }
 
   /**
    * Update state so the next render will show the fallback UI.

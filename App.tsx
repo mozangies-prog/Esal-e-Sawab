@@ -13,7 +13,7 @@ const USER_KEY = 'esal_user_name';
 const VIEW_KEY = 'esal_view_mode';
 
 const MEMORIAL_NAME = 'Chaudhary Liaqat Ali';
-const PASSED_DATE = '2023-08-15'; // Placeholder: User can update this
+const PASSED_DATE = '2023-02-11'; // Updated to Feb 11, 2023
 const POLLING_FAST = 5000;
 const POLLING_SLOW = 20000;
 
@@ -26,7 +26,7 @@ const App: React.FC = () => {
         return { 
           ...parsed, 
           deceasedName: MEMORIAL_NAME, 
-          passedDate: parsed.passedDate || PASSED_DATE,
+          passedDate: PASSED_DATE, // Force update the constant date
           contributions: parsed.contributions || []
         };
       }
@@ -51,14 +51,18 @@ const App: React.FC = () => {
   const anniversaryInfo = useMemo(() => {
     const passed = new Date(localData.passedDate);
     const today = new Date();
+    // Normalize to compare only dates
+    const currentToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const currentYear = today.getFullYear();
     
     let next = new Date(currentYear, passed.getMonth(), passed.getDate());
-    if (next < today && next.toDateString() !== today.toDateString()) {
+    
+    // If anniversary already happened this year, look at next year
+    if (next < currentToday) {
       next = new Date(currentYear + 1, passed.getMonth(), passed.getDate());
     }
     
-    const diff = next.getTime() - today.getTime();
+    const diff = next.getTime() - currentToday.getTime();
     const days = Math.ceil(diff / (1000 * 3600 * 24));
     const isToday = today.getMonth() === passed.getMonth() && today.getDate() === passed.getDate();
     
@@ -204,7 +208,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Anniversary Reminder Section */}
+      {/* Anniversary Reminder Section - Positioned at the top as per "under name" request */}
       <div className={`mb-8 p-6 rounded-3xl border transition-all duration-700 ${anniversaryInfo.isToday ? 'bg-cyan-500 border-cyan-400 shadow-xl shadow-cyan-500/20' : 'bg-white border-cyan-50 shadow-sm'}`}>
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-5">
@@ -234,9 +238,6 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Analytics Tabs Section */}
-      <RecitationCharts contributions={localData.contributions} />
 
       {/* User Input Bar */}
       <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 border border-cyan-50 flex flex-col md:flex-row items-center justify-between gap-6 mb-8 shadow-sm">
@@ -275,7 +276,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-3xl border border-cyan-50 p-5 sm:p-8 shadow-sm max-w-5xl mx-auto">
+      <div className="bg-white rounded-3xl border border-cyan-50 p-5 sm:p-8 shadow-sm max-w-5xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-sm sm:text-lg font-black text-slate-800 uppercase tracking-widest">Recent Activity</h2>
           <div className="text-right">
@@ -314,6 +315,9 @@ const App: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Recitation Analytics moved to bottom part as requested */}
+      <RecitationCharts contributions={localData.contributions} />
 
       <footer className="text-center py-10 mt-10 border-t border-slate-100">
         <p className="text-[9px] uppercase font-black tracking-[0.6em] text-slate-300">Esal-e-Sawab • Sadaqah Jariyah</p>
